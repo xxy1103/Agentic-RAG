@@ -1,0 +1,59 @@
+# Base RAG
+
+一个可读、可替换、可验证的本地文档 RAG 基础项目。它不依赖 LangChain：你可以从代码中直接看到 Document → Chunking → Embedding → FAISS → Retriever → LLM → Answer 的完整数据流。
+
+## 支持范围
+
+- 本地 PDF（仅可提取文字的 PDF，按页保留引用）；Markdown/MDX；HTML。
+- FAISS `IndexFlatIP` + L2 归一化，实现余弦相似度 Dense Retrieval。
+- 阿里百炼中国内地 OpenAI 兼容接口；Embedding 与 LLM 模型均由 YAML 配置决定。
+- 强制基于检索证据回答；每次回答都会追加有效来源。无命中时直接拒答。
+
+不支持 OCR、网页抓取、LangChain、BM25/RRF、Reranker、Agent 与前端。
+
+## 安装与配置
+
+需要 Python 3.13。建议在项目根目录创建虚拟环境后安装：
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+Copy-Item .env.example .env
+```
+
+在 `.env` 中填入 `DASHSCOPE_API_KEY`。真实 Key 不会被读取进 YAML、索引或运行记录。
+
+所有模型与 RAG 参数均在 [config/default.yaml](config/default.yaml) 中修改：模型名、维度、Chunk 大小/重叠、批量大小、Top-K、相似度阈值、上下文长度、温度、超时和重试次数。
+
+## 语料与命令
+
+首次执行下列命令会从博客复制固定的 70 篇主题文章，并生成 `data/corpus_manifest.json`：
+
+```powershell
+python scripts/snapshot_blog_corpus.py --source "A:\XXY\blog\xxy1103.github.io\src\content\blog"
+python -m base_rag ingest --config config/default.yaml
+python -m base_rag ask --config config/default.yaml --question "KDD Cup 2026 Data Agents 比赛强调哪些能力？"
+python -m base_rag eval --config config/default.yaml
+```
+
+`ingest` 会完整重建索引，并输出文件数、Chunk 数、长度统计和语料哈希。Chunk 数仅作为观测指标，不会限制少量文档或大规模语料的建库。
+
+## 产物
+
+- `data/raw/`：70 篇博客快照。
+- `data/corpus_manifest.json`：原始路径、快照路径、主题、标题、标签、字符数和 SHA-256。
+- `data/index/`：FAISS 索引、Chunk 元数据与构建参数。
+- `runs/`：每次问答的检索结果、分数、Prompt、答案、引用、模型和耗时；不包含密钥。
+
+## 验证
+
+```powershell
+python -m pytest
+```
+
+离线测试使用假 Embedding/LLM，覆盖三类 Loader、切块稳定性、配置安全、FAISS 保存/重载、引用和运行记录。设置真实 API Key 后，再执行 ingest、ask 和 10 题 eval 完成在线冒烟验证。
+
+## 后续学习路线
+
+当前项目只实现 Vanilla Dense RAG。确认 Chunk、Top-K、相似度和引用均可观察后，再依次加入检索评估、BM25 + Dense/RRF、Reranker、Query Rewrite 与可靠性策略。

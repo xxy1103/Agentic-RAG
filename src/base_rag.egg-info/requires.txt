@@ -1,0 +1,10 @@
+beautifulsoup4>=4.12
+faiss-cpu>=1.11
+numpy>=2.0
+openai>=1.0
+PyMuPDF>=1.26
+python-dotenv>=1.0
+PyYAML>=6.0
+
+[dev]
+pytest>=8.0

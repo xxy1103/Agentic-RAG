@@ -1,0 +1,632 @@
+[
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 Data Agents_20260328_102204.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 Data Agents_20260328_102204.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Data Agents",
+    "tags": [],
+    "characters": 34771,
+    "sha256": "2a96b377110371de63bcbb379ad6437d5d35ac76f7730667d643a55fe744f120"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 Data AgentIDMG123 队伍过程校验 Agent 设计_20260803161353.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 Data AgentIDMG123 队伍过程校验 Agent 设计_20260803161353.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Data Agent：IDMG123 队伍过程校验 Agent 设计",
+    "tags": [],
+    "characters": 15217,
+    "sha256": "5d09ece79a69c187d2292d1126637ecee251eca7ae4f3cbbe759dc9c89fa2b99"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 ChampionSolver 脚手架、统一数据层与主求解 Agent_20260813180540.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 ChampionSolver 脚手架、统一数据层与主求解 Agent_20260813180540.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Champion：Solver 脚手架、统一数据层与主求解 Agent",
+    "tags": [],
+    "characters": 13047,
+    "sha256": "abfffd08ce6512d78bdf9d44ec68588316c5a456005248bf470ed92f5ebd1d1b"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 Data Agent主 Agent 运行前预处理流程_20260731174048.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 Data Agent主 Agent 运行前预处理流程_20260731174048.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Data Agent：主 Agent 运行前预处理流程",
+    "tags": [],
+    "characters": 12770,
+    "sha256": "072c5b3c53f963d6274229edb41b4f47bd3d8ac411bdc22972f590b522935faf"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDDCUP2026Data-agentIDMG123队伍视频理解方案_20260723_181320.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDDCUP2026Data-agentIDMG123队伍视频理解方案_20260723_181320.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Data Agent：IDMG123 队伍视频理解方案",
+    "tags": [],
+    "characters": 12421,
+    "sha256": "8251c26665619d39b1c88777068a7b4577eae45b823326fc2614e461ec7e378f"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 Champion结构化表相关性判定agent_20260812204352.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 Champion结构化表相关性判定agent_20260812204352.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Champion：结构化表相关性判定agent",
+    "tags": [],
+    "characters": 11476,
+    "sha256": "3b69530f877e4d83e3ca602f965c7038de0aaa8e3bd404d638cc33e9e3169ba8"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup DataAgent Top1 方案分享（2）：基于 H.264 码流的关键帧抽取_20260724_182045.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup DataAgent Top1 方案分享（2）：基于 H.264 码流的关键帧抽取_20260724_182045.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup DataAgent Top1 方案分享（2）：基于 H.264 码流的关键帧抽取",
+    "tags": [],
+    "characters": 9518,
+    "sha256": "4198f010d930f4c0a98356407ebb032460cdd1e476bb3459736bd628d747c5bf"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 ChampionVideo Result Agent 设计说明_20260812144021.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 ChampionVideo Result Agent 设计说明_20260812144021.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Champion：Video Result Agent 设计说明",
+    "tags": [],
+    "characters": 6519,
+    "sha256": "f167406cae5a5cfc21335ec78a15eeb031635739ac736db4ed5a8d996f18467d"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup DataAgent Top1 方案分享（1）：视频理解 ASR 技术方案_20260724_181700.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup DataAgent Top1 方案分享（1）：视频理解 ASR 技术方案_20260724_181700.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup DataAgent Top1 方案分享（1）：视频理解 ASR 技术方案",
+    "tags": [],
+    "characters": 6257,
+    "sha256": "004e35342a0732a87eedc599a0ce5f058c3ee516cc7e2181e1fc1322cdd2a7c8"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDD Cup 2026 Champion文档筛选与结构化抽取工作流_20260812142406.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDD Cup 2026 Champion文档筛选与结构化抽取工作流_20260812142406.md",
+    "theme": "kdd_agent",
+    "title": "KDD Cup 2026 Champion：文档筛选与结构化抽取工作流",
+    "tags": [],
+    "characters": 17099,
+    "sha256": "6462fe39cc091f93b611eafd45deb7cb042b2ff9166cd1a5e6d495fb3c411a42"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\KDDCUP ASR Top1 四模型对比复测_20260726_171516.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\KDDCUP ASR Top1 四模型对比复测_20260726_171516.md",
+    "theme": "kdd_agent",
+    "title": "KDDCUP ASR Top1 ASR 方案复现效果",
+    "tags": [],
+    "characters": 5809,
+    "sha256": "de04a1004aa9050f1e0700874be1c237470f88d206fda8d387bc31be12ba1524"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\java-Web基础_20250519_165356.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\java-Web基础_20250519_165356.md",
+    "theme": "kdd_agent",
+    "title": "java-Web基础之Servlet、Filter、Listener",
+    "tags": [],
+    "characters": 40638,
+    "sha256": "0d6410afb5e81528afd23fba668a44a5722bf82224c8fee51bab1b2b542b6eed"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Java网络编程入门_20250513_193851.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Java网络编程入门_20250513_193851.md",
+    "theme": "kdd_agent",
+    "title": "Java网络编程入门-HTTP请求",
+    "tags": [],
+    "characters": 9704,
+    "sha256": "61b8b36030a1e49497919a985bd34f898f065533cf3d47fc03a0b95d5a7116ef"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\AI增强之_Skills_20260128_171924.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\AI增强之_Skills_20260128_171924.md",
+    "theme": "kdd_agent",
+    "title": "AI增强之_Skills",
+    "tags": [],
+    "characters": 6325,
+    "sha256": "62007614569cafefa1013258bb422163c3f77d8f246fae1319479fa5a3e12f96"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Java-Web基础之Session_20250727_105620.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Java-Web基础之Session_20250727_105620.md",
+    "theme": "kdd_agent",
+    "title": "Java-Web基础之Session",
+    "tags": [],
+    "characters": 5845,
+    "sha256": "cda930235ff113dd7b99f7ca804db8cf193e62ed09c53ccbd2808bd7d439de42"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\java类与对象_20250118_100306.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\java类与对象_20250118_100306.md",
+    "theme": "rag",
+    "title": "java类与对象",
+    "tags": [],
+    "characters": 5369,
+    "sha256": "8389ad36adb13f5261aca49856631fb488f0ec599806e0185805463ff738022f"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\tab7plus.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\tab7plus.md",
+    "theme": "rag",
+    "title": "利用termux搭建桌面级生产力工具",
+    "tags": [],
+    "characters": 4414,
+    "sha256": "123a58745130915344339a077024f5fd009bbda63b4c3402ef982671734eef0d"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\静态查找表笔记_20241128_130305.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\静态查找表笔记_20241128_130305.md",
+    "theme": "rag",
+    "title": "静态查找表笔记",
+    "tags": [],
+    "characters": 4365,
+    "sha256": "559ad3bc50c865779a23bd16a1986959a8243214bbe8ffdbed8382a0521c6eb9"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\smb协议简单配置_20241022_135439.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\smb协议简单配置_20241022_135439.md",
+    "theme": "rag",
+    "title": "smb协议简单配置",
+    "tags": [],
+    "characters": 3598,
+    "sha256": "d26cb96f4adffd9a6aab4e75fd1c8423273c912210ee015415dc437c6f5bb13a"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\第三章--同步与互斥_20251028_085904.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\第三章--同步与互斥_20251028_085904.md",
+    "theme": "systems",
+    "title": "第三章--同步与互斥",
+    "tags": [],
+    "characters": 21216,
+    "sha256": "27efa2fded5753508e657c26b29b21ff9f39e74594ab959e252b0563a1d894a7"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\操作系统期末复习_20260104_152537.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\操作系统期末复习_20260104_152537.md",
+    "theme": "systems",
+    "title": "操作系统期末复习",
+    "tags": [],
+    "characters": 45573,
+    "sha256": "f63d9c73113d36101de54dd4d9a93449452395d6b9473020ee83271a2da8615b"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\第二章--进程管理_20251024_143751.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\第二章--进程管理_20251024_143751.md",
+    "theme": "systems",
+    "title": "第二章--处理机管理",
+    "tags": [],
+    "characters": 16416,
+    "sha256": "33249ac77a8e02d697d8263d68bc9ea13016260ef63b680f49964bdf3e99697e"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\第一章--操作系统概述_20251023_153138.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\第一章--操作系统概述_20251023_153138.md",
+    "theme": "systems",
+    "title": "第一章--操作系统概述",
+    "tags": [],
+    "characters": 9008,
+    "sha256": "d17ec745ef0e416521d5148418284e3dadc1060ddcedc20039b055d086f5cc08"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\链接_20241219_145141.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\链接_20241219_145141.md",
+    "theme": "systems",
+    "title": "链接",
+    "tags": [],
+    "characters": 15208,
+    "sha256": "b86f9f2302204e456937b9b0865f2df537e59570e300a67d25a0be998d07a040"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机系统基础第十章系统级_20241212_152031.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机系统基础第十章系统级_20241212_152031.md",
+    "theme": "systems",
+    "title": "计算机系统基础第十章系统级I/O",
+    "tags": [],
+    "characters": 9372,
+    "sha256": "3e12922fa7e14a439dc78c4a0abac59169767601d001d9ef32d606ba5b28ef18"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\IO设备_20251220_171414.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\IO设备_20251220_171414.md",
+    "theme": "systems",
+    "title": "IO设备",
+    "tags": [],
+    "characters": 13293,
+    "sha256": "771c2e4704371123a808bb2a9f368445134e21b9764f4bc6b768e201d5f3cae7"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\内存管理_20251204_141646.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\内存管理_20251204_141646.md",
+    "theme": "systems",
+    "title": "内存管理",
+    "tags": [],
+    "characters": 13251,
+    "sha256": "a541ed34df997799efe2eacddb91c59513e7b87a15f99f89961ed0297e408d8a"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络序章_20250225_133356.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络序章_20250225_133356.md",
+    "theme": "systems",
+    "title": "计算机网络第一章",
+    "tags": [],
+    "characters": 12882,
+    "sha256": "6f8b26f8259ef4ff7d7612b138ebc8ecb83cfa72397a59d3f7dca91c6a5dcf85"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\操作系统期中习题复习_20251110_092015.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\操作系统期中习题复习_20251110_092015.md",
+    "theme": "systems",
+    "title": "操作系统期中习题复习",
+    "tags": [],
+    "characters": 7507,
+    "sha256": "6d96ef0722a60bdae9041f51e0b8d4693438670f4899afe17b5346c5b42a5543"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\操作系统期中复习课_20251104_163546.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\操作系统期中复习课_20251104_163546.md",
+    "theme": "systems",
+    "title": "操作系统期中复习课",
+    "tags": [],
+    "characters": 11591,
+    "sha256": "10d07a22e62697d08c5901f602a3c0ed3e61611528444be287e38d099e9163a3"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\linux操纵命令集合.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\linux操纵命令集合.md",
+    "theme": "systems",
+    "title": "linux 简单操作命令集合",
+    "tags": [],
+    "characters": 2333,
+    "sha256": "7f3f1e9ea87c287f711bf9bb9b1bb2477f467c970b8cb30ecf5df6d103b77e20"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机系统基础_程序的机器级表示_20241027_212753.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机系统基础_程序的机器级表示_20241027_212753.md",
+    "theme": "systems",
+    "title": "计算机系统基础_程序的机器级表示",
+    "tags": [],
+    "characters": 19978,
+    "sha256": "96b2f853e2b3465784b746669b5c84dfe6c051366cd7d69174d74ddc4550d045"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第四章--介质访问控制子层_20250327_220942.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第四章--介质访问控制子层_20250327_220942.md",
+    "theme": "systems",
+    "title": "计算机网络第四章--介质访问控制层",
+    "tags": [],
+    "characters": 16063,
+    "sha256": "63de09c54acdc07807e700a3a8405a0e2aeb99515afcaae4e4e8627402b8f2f6"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第6章--传输层_20250527_102317.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第6章--传输层_20250527_102317.md",
+    "theme": "systems",
+    "title": "计算机网络第6章--传输层",
+    "tags": [],
+    "characters": 13274,
+    "sha256": "7fbb71214614ed4453a0ee10c3f27c450fd4711569c9d813e6caaf37fdcf30ae"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第二章--物理层_20250308_112542.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第二章--物理层_20250308_112542.md",
+    "theme": "systems",
+    "title": "计算机网络第二章--物理层",
+    "tags": [],
+    "characters": 11710,
+    "sha256": "03d4386fe18ad3b4327ea74ff0dfce5f1325d9016dd55e51340a30541a5efff2"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第五章--网络层_20250425_151005.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第五章--网络层_20250425_151005.md",
+    "theme": "systems",
+    "title": "计算机网络第五章--网络层",
+    "tags": [],
+    "characters": 17192,
+    "sha256": "1d4ea7ca2338a801e102dbf4cb778073c69c2768fb552219693e767fe2fe531f"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第三章--数据链路层_20250315_094457.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第三章--数据链路层_20250315_094457.md",
+    "theme": "systems",
+    "title": "计算机网络第三章--数据链路层",
+    "tags": [],
+    "characters": 15078,
+    "sha256": "d6de000acd1278cc4d7f56fcaabc2d5449f04b4a16286c7df9a811a1d50992b4"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机系统基础第二章_信息的表示和处理_20241024_102544.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机系统基础第二章_信息的表示和处理_20241024_102544.md",
+    "theme": "systems",
+    "title": "计算机系统基础第二章_信息的表示和处理",
+    "tags": [],
+    "characters": 10260,
+    "sha256": "f3d0a4119f4b1cabc3391822da4e058a25f758e2962290472a5efb5a00a54c98"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机系统基础第三次实验_20241129_195603.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机系统基础第三次实验_20241129_195603.md",
+    "theme": "systems",
+    "title": "计算机系统基础第三次实验",
+    "tags": [],
+    "characters": 10140,
+    "sha256": "4a79ce079ca0ae7eb243e780ef387378f4d3ad1bb2d22db6d8fd75647fd5fb16"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\SCRAPY爬虫框架_20251112_101434.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\SCRAPY爬虫框架_20251112_101434.md",
+    "theme": "python_data",
+    "title": "SCRAPY爬虫框架--基础篇",
+    "tags": [],
+    "characters": 20663,
+    "sha256": "21e3cc59845855f49f9cb71f75acc5b44af005f0e0d8434c0fb882ea3762bf66"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\MySQL_20250807_113813.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\MySQL_20250807_113813.md",
+    "theme": "python_data",
+    "title": "MySQL",
+    "tags": [],
+    "characters": 2978,
+    "sha256": "9eb3d5c182e4fc3c84308f848a51e3491278a4e41eb0d32b5840ce20d1dbf088"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\SQL语言_20250807_153153.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\SQL语言_20250807_153153.md",
+    "theme": "python_data",
+    "title": "SQL基础",
+    "tags": [],
+    "characters": 27812,
+    "sha256": "384b25213d0d58c71890df4e19ce68ca4d19d468cfb1028e68ae8124e435d68d"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\数据结构排序算法_20241211_155400.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\数据结构排序算法_20241211_155400.md",
+    "theme": "python_data",
+    "title": "数据结构排序算法",
+    "tags": [],
+    "characters": 14057,
+    "sha256": "29f663708d7239dfdf2ec7d13aad2787bdb978218e1a5c729830b404f0a59ead"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Flask框架的使用_20250226_205249.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Flask框架的使用_20250226_205249.md",
+    "theme": "python_data",
+    "title": "Flask框架的使用",
+    "tags": [],
+    "characters": 9203,
+    "sha256": "d88866920df6909f3a64ddf55d4412e49cdf44aa2bd0fa2301597c73ff07ba16"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Flask模板补充_20250301_214029.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Flask模板补充_20250301_214029.md",
+    "theme": "python_data",
+    "title": "Flask模板补充",
+    "tags": [],
+    "characters": 3631,
+    "sha256": "85c56434da031d6fe5d8a5e596b359405b12ceef143bb360188124d67fe91238"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\部署Flask应用_20250306_214237.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\部署Flask应用_20250306_214237.md",
+    "theme": "python_data",
+    "title": "部署Flask应用",
+    "tags": [],
+    "characters": 2777,
+    "sha256": "0101183d82fee682d46a6dcaafc5b6b4d6b73ecd86a0147ea7852fdce8fe892b"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Flask表单处理_20250303_092125.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Flask表单处理_20250303_092125.md",
+    "theme": "python_data",
+    "title": "Flask表单处理",
+    "tags": [],
+    "characters": 2720,
+    "sha256": "cedc55698c05dedc853512f922edcc6ce62aa6cd949b9c0bd3f5127e88cb032a"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Flask路由详细讲解_20250301_171827.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Flask路由详细讲解_20250301_171827.md",
+    "theme": "python_data",
+    "title": "Flask路由与视图函数补充讲解",
+    "tags": [],
+    "characters": 1981,
+    "sha256": "08f1a79779de39ae0abf112b59d501d2cbd3338fd137e826e571980fb7fd5894"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\flask蓝图_20250306_153654.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\flask蓝图_20250306_153654.md",
+    "theme": "python_data",
+    "title": "flask蓝图",
+    "tags": [],
+    "characters": 1904,
+    "sha256": "0c5971cc7b0c1d6ef49e30ee1022bef1507da0b027d5a3a2d39ca261c9a5cc96"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\C++之常用数据结构梳理_20251114_205702.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\C++之常用数据结构梳理_20251114_205702.md",
+    "theme": "python_data",
+    "title": "CCF短期速成指北",
+    "tags": [],
+    "characters": 22575,
+    "sha256": "eac764d449167c124a7519714f680966be791e3dd34e9d82c6f1209d888f0223"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\数据结构-图(二)_20241219_140301.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\数据结构-图(二)_20241219_140301.md",
+    "theme": "python_data",
+    "title": "数据结构-图(二)",
+    "tags": [],
+    "characters": 17878,
+    "sha256": "fa74419bebca83f1e3be5ab15d8133084a1b18f4d433fcd446d554071c65d8b1"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\APEX-SQLSchema Linking 的规划、探索与全局细化_20260823162235.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\APEX-SQLSchema Linking 的规划、探索与全局细化_20260823162235.md",
+    "theme": "python_data",
+    "title": "APEX-SQL：Schema Linking 的规划、探索与全局细化",
+    "tags": [],
+    "characters": 13707,
+    "sha256": "89bfd17098eab4c084349c740d1c61bb433ae32aae8ba4b620803446e6d94270"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\数据结构_树_20241028_112500.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\数据结构_树_20241028_112500.md",
+    "theme": "python_data",
+    "title": "数据结构_树",
+    "tags": [],
+    "characters": 9499,
+    "sha256": "b601b7280e941c565a6d7d733eb68e24f0b51c4b5aa7330382c695e9cd18dd78"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\数据结构-图_20241216_165356.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\数据结构-图_20241216_165356.md",
+    "theme": "python_data",
+    "title": "数据结构-图",
+    "tags": [],
+    "characters": 7057,
+    "sha256": "ec7c82fdfb3f711495fedfc9d7cf51f0c033a9e2134fc4f90f8a13344c3f170d"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\blog主题开发与架构_20260212_175800.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\blog主题开发与架构_20260212_175800.md",
+    "theme": "engineering",
+    "title": "blog主题开发与架构",
+    "tags": [],
+    "characters": 3960,
+    "sha256": "4f5855ae6e83b5be3be51ac873acf1ec10cf60329ced4dad8d79fed5b0632fe6"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Web开发-后端基础篇_20250822_101151.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Web开发-后端基础篇_20250822_101151.md",
+    "theme": "engineering",
+    "title": "Web开发-后端基础篇",
+    "tags": [],
+    "characters": 29651,
+    "sha256": "99be05817f881c99ec64d83be7c80c19e324c8b4171c4299e3a140433420439e"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Web开发-Vue框架_20250820_142200.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Web开发-Vue框架_20250820_142200.md",
+    "theme": "engineering",
+    "title": "Web开发-前端框架",
+    "tags": [],
+    "characters": 19840,
+    "sha256": "4b34df66f858f5fe9c629179058c4af5fd4fbd79cde357002792d03f4c66ac4c"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\SpringMVC_20250516_205704.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\SpringMVC_20250516_205704.md",
+    "theme": "engineering",
+    "title": "SpringMVC注解",
+    "tags": [],
+    "characters": 10102,
+    "sha256": "4da9986562f3b6797e011db55045be1ce42f5928aceb30b831050a2ce72379c1"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\一个基础的SpringBoot应用_20250509_184533.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\一个基础的SpringBoot应用_20250509_184533.md",
+    "theme": "engineering",
+    "title": "一个基础的SpringBoot应用",
+    "tags": [],
+    "characters": 8026,
+    "sha256": "f36449ce542ab9c4d41247c37108ee39dadfbab3009eff9c5c265ae239c54516"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Web开发-后端拓展篇_20250828_104949.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Web开发-后端拓展篇_20250828_104949.md",
+    "theme": "engineering",
+    "title": "Web开发-后端拓展篇",
+    "tags": [],
+    "characters": 43286,
+    "sha256": "f24ffd9df28e58fb68b6ca36cb470fe4057e972292ba073d6df83e7650177844"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Spring-Boot原理篇_20250903_094556.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Spring-Boot原理篇_20250903_094556.md",
+    "theme": "engineering",
+    "title": "Spring-Boot原理篇",
+    "tags": [],
+    "characters": 21689,
+    "sha256": "15b7aa0c48d8fc55bbea99e17ef6191e654406fcffc419afcb40fe02c6ee9e93"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\blog上传服务器升级_20250203_174038.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\blog上传服务器升级_20250203_174038.md",
+    "theme": "engineering",
+    "title": "针对写博客的流程优化",
+    "tags": [],
+    "characters": 5744,
+    "sha256": "b82538b21f5e793c18b111b1ab57d57ec1e79f1ddf278eace6cbc9c5c84d3754"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\cmake-配置与基础_20250618_083114.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\cmake-配置与基础_20250618_083114.md",
+    "theme": "engineering",
+    "title": "cmake-配置与基础",
+    "tags": [],
+    "characters": 4365,
+    "sha256": "3cc9d47d9843f41b2ab5da6257f176ebd9980e6aefb1dbef00cd00666880b020"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\vscode.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\vscode.md",
+    "theme": "engineering",
+    "title": "vscode tasks.json配置",
+    "tags": [],
+    "characters": 9223,
+    "sha256": "30d1de6735404d5eaeed1efd503ff9e21ff82c1a933633191f31e3a07ecacae9"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\git使用.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\git使用.md",
+    "theme": "engineering",
+    "title": "git使用",
+    "tags": [],
+    "characters": 148270,
+    "sha256": "9918e2bf13571cb2d2394e66b17adf2c4b9c2b3686a5ec526b94bd2c0c008437"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\Web开发-前端_20250817_103105.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\Web开发-前端_20250817_103105.md",
+    "theme": "engineering",
+    "title": "Web开发-前端",
+    "tags": [],
+    "characters": 42123,
+    "sha256": "c65581abc516bdfc234c11fb5b16b3df3778fa7972b286150d78290456247532"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\ollama部署大预言模型_20250120_220133.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\ollama部署大预言模型_20250120_220133.md",
+    "theme": "engineering",
+    "title": "ollama部署大预言模型",
+    "tags": [],
+    "characters": 2669,
+    "sha256": "7c9f7fc6f105b9a791ac8034186a5e23180802521f1780685742bbdd2a0c8298"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\openwrt.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\openwrt.md",
+    "theme": "engineering",
+    "title": "openwrt 软路由设置",
+    "tags": [],
+    "characters": 3922,
+    "sha256": "e67a57c5d36d4140ce46001425f8d393a7fc9a057d7f24647dc95857784e69e0"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\表达式计算_20251013_104406.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\表达式计算_20251013_104406.md",
+    "theme": "engineering",
+    "title": "表达式计算",
+    "tags": [],
+    "characters": 14188,
+    "sha256": "6b1a8c9ad20e064a2c66b2abf043cf27068c0ab5ea3b4491f1155a0e3d6b9cb6"
+  },
+  {
+    "source_path": "A:\\XXY\\blog\\xxy1103.github.io\\src\\content\\blog\\计算机网络第七章--应用层_20250603_085515.md",
+    "snapshot_path": "A:\\XXY\\RAG\\data\\raw\\计算机网络第七章--应用层_20250603_085515.md",
+    "theme": "systems",
+    "title": "计算机网络第7章--应用层",
+    "tags": [],
+    "characters": 9492,
+    "sha256": "7996f5c455a8828edfbdb3ce6913f48e41c26ef783d91f8219347c222a05839f"
+  }
+]

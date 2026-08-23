@@ -1,0 +1,31 @@
+questions:
+  - id: kdd-overview
+    question: KDD Cup 2026 Data Agents 比赛强调哪些能力？
+    expected_source: KDD Cup 2026 Data Agents
+  - id: kdd-validation
+    question: 过程校验 Agent 的主要职责是什么？
+    expected_source: 队伍过程校验 Agent
+  - id: kdd-preprocess
+    question: 主 Agent 运行前预处理流程为什么要统一查询异构数据？
+    expected_source: 主 Agent 运行前预处理流程
+  - id: systems-process
+    question: 操作系统中的进程管理主要解决什么问题？
+    expected_source: 第二章--进程管理
+  - id: systems-sync
+    question: 同步与互斥有什么关系？
+    expected_source: 第三章--同步与互斥
+  - id: systems-memory
+    question: 内存管理需要处理哪些核心问题？
+    expected_source: 内存管理
+  - id: data-sql
+    question: SQL 语言用于解决什么类型的数据操作？
+    expected_source: SQL语言
+  - id: data-scrapy
+    question: SCRAPY 爬虫框架的基本用途是什么？
+    expected_source: SCRAPY爬虫框架
+  - id: engineering-git
+    question: Git 在工程协作中有什么作用？
+    expected_source: git使用
+  - id: engineering-web
+    question: Web 后端基础开发通常包含哪些内容？
+    expected_source: Web开发-后端基础篇

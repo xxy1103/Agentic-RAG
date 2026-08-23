@@ -1,0 +1,2 @@
+[console_scripts]
+base-rag = base_rag.cli:main

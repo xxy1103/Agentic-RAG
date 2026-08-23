@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "base-rag"
+version = "0.1.0"
+description = "透明、模块化的本地文档 RAG 基础项目"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "faiss-cpu>=1.11",
+  "numpy>=2.0",
+  "openai>=1.0",
+  "PyMuPDF>=1.26",
+  "python-dotenv>=1.0",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+base-rag = "base_rag.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

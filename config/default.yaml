@@ -1,0 +1,32 @@
+paths:
+  corpus_dir: data/raw
+  index_dir: data/index
+  runs_dir: runs
+
+models:
+  api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+  embedding_model: qwen3.7-text-embedding
+  embedding_dimensions: 1024
+  llm_model: qwen3.7-plus
+  timeout_seconds: 60
+  max_retries: 3
+  retry_backoff_seconds: 1.5
+
+ingestion:
+  allowed_extensions: [".pdf", ".md", ".mdx", ".html", ".htm"]
+  chunk_size: 1000
+  chunk_overlap: 150
+  embedding_batch_size: 16
+  fail_on_error: true
+
+retrieval:
+  top_k: 6
+  min_score: 0.25
+  max_context_characters: 9000
+
+generation:
+  temperature: 0.1
+  max_tokens: 1200
+
+runtime:
+  save_runs: true
