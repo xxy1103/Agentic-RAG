@@ -14,6 +14,16 @@ def test_markdown_loader_strips_noise_and_keeps_alt_text(tmp_path: Path) -> None
     assert "图示" in document.text
 
 
+def test_markdown_loader_drops_blog_preamble_before_more_marker(tmp_path: Path) -> None:
+    path = tmp_path / "blog.md"
+    path.write_text("---\ntitle: 正文\n---\n# 每日一言\n无关歌词\n<!-- more -->\n# 正文标题\n可检索的正文事实。", encoding="utf-8")
+    document = load_path(path)[0]
+    assert "每日一言" not in document.text
+    assert "无关歌词" not in document.text
+    assert "正文标题" in document.text
+    assert "可检索的正文事实" in document.text
+
+
 def test_html_loader_removes_navigation(tmp_path: Path) -> None:
     path = tmp_path / "page.html"
     path.write_text("<html><head><title>网页</title><style>x</style></head><body><nav>菜单</nav><article>正文内容</article><script>bad()</script></body></html>", encoding="utf-8")

@@ -47,7 +47,7 @@ class FaissStore:
         for rank, (score, index) in enumerate(zip(scores[0], indexes[0]), start=1):
             if index < 0 or (min_score is not None and float(score) < min_score):
                 continue
-            hits.append(SearchHit(self.chunks[int(index)], float(score), rank))
+            hits.append(SearchHit(self.chunks[int(index)], float(score), rank, dense_score=float(score), dense_rank=rank))
         return hits
 
     def save(self, index_dir: Path) -> None:

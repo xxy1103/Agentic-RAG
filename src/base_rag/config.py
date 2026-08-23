@@ -39,6 +39,24 @@ class RetrievalConfig:
     top_k: int
     min_score: float | None
     max_context_characters: int
+    dense_candidate_k: int = 20
+    sparse_candidate_k: int = 20
+    fusion_candidate_k: int = 30
+    rrf_k: int = 60
+
+
+@dataclass(frozen=True)
+class QueryRewriteConfig:
+    enabled: bool = False
+    max_tokens: int = 400
+
+
+@dataclass(frozen=True)
+class RerankerConfig:
+    enabled: bool = False
+    model: str = "qwen3-rerank"
+    top_n: int = 6
+    instruct: str = "Given a web search query, retrieve relevant passages that answer the query."
 
 
 @dataclass(frozen=True)
@@ -50,6 +68,13 @@ class GenerationConfig:
 @dataclass(frozen=True)
 class RuntimeConfig:
     save_runs: bool
+    default_profile: str = "dense"
+
+
+@dataclass(frozen=True)
+class EvaluationConfig:
+    judge_enabled: bool = True
+    judge_max_tokens: int = 500
 
 
 @dataclass(frozen=True)
@@ -58,8 +83,11 @@ class AppConfig:
     models: ModelsConfig
     ingestion: IngestionConfig
     retrieval: RetrievalConfig
+    query_rewrite: QueryRewriteConfig
+    reranker: RerankerConfig
     generation: GenerationConfig
     runtime: RuntimeConfig
+    evaluation: EvaluationConfig
     config_path: Path
 
     def safe_dict(self) -> dict[str, Any]:
@@ -87,8 +115,11 @@ def load_config(config_path: str | Path) -> AppConfig:
             **{key: value for key, value in raw["ingestion"].items() if key != "allowed_extensions"},
         ),
         retrieval=RetrievalConfig(**raw["retrieval"]),
+        query_rewrite=QueryRewriteConfig(**raw.get("query_rewrite", {})),
+        reranker=RerankerConfig(**raw.get("reranker", {})),
         generation=GenerationConfig(**raw["generation"]),
         runtime=RuntimeConfig(**raw["runtime"]),
+        evaluation=EvaluationConfig(**raw.get("evaluation", {})),
         config_path=path,
     )
     _validate(config)
@@ -113,3 +144,7 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("chunk_overlap 必须小于 chunk_size。")
     if config.models.embedding_dimensions <= 0 or config.retrieval.top_k <= 0:
         raise ValueError("embedding_dimensions 和 top_k 必须为正数。")
+    if min(config.retrieval.dense_candidate_k, config.retrieval.sparse_candidate_k, config.retrieval.fusion_candidate_k, config.retrieval.rrf_k) <= 0:
+        raise ValueError("候选数和 rrf_k 必须为正数。")
+    if config.reranker.top_n <= 0:
+        raise ValueError("reranker.top_n 必须为正数。")

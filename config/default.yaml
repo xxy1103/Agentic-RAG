@@ -23,6 +23,20 @@ retrieval:
   top_k: 6
   min_score: 0.25
   max_context_characters: 9000
+  dense_candidate_k: 20
+  sparse_candidate_k: 20
+  fusion_candidate_k: 30
+  rrf_k: 60
+
+query_rewrite:
+  enabled: true
+  max_tokens: 400
+
+reranker:
+  enabled: true
+  model: qwen3-rerank
+  top_n: 6
+  instruct: "Given a web search query, retrieve relevant passages that answer the query."
 
 generation:
   temperature: 0.1
@@ -30,3 +44,8 @@ generation:
 
 runtime:
   save_runs: true
+  default_profile: advanced
+
+evaluation:
+  judge_enabled: true
+  judge_max_tokens: 500

@@ -31,6 +31,7 @@ def _source_id(path: Path) -> str:
 def _load_markdown(path: Path) -> SourceDocument:
     raw = path.read_text(encoding="utf-8")
     frontmatter, body = _split_frontmatter(raw)
+    body = _drop_blog_preamble(body)
     body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
     body = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", body)
     body = re.sub(r"^\s*(import|export)\s+.*$", "", body, flags=re.M)
@@ -84,6 +85,18 @@ def _split_frontmatter(raw: str) -> tuple[dict[str, object], str]:
 def _first_heading(text: str) -> str | None:
     match = re.search(r"^#\s+(.+)$", text, flags=re.M)
     return match.group(1).strip() if match else None
+
+
+def _drop_blog_preamble(body: str) -> str:
+    """Discard blog excerpts before Astro's explicit `<!-- more -->` boundary.
+
+    The snapshot corpus places daily quotes, lyrics, and other non-article text
+    before this marker. Removing that whole preamble keeps every downstream
+    stage (Dense, BM25, reranking, and generation) on the same clean article.
+    Files without the marker are left unchanged.
+    """
+    marker = re.search(r"<!--\s*more\s*-->", body, flags=re.I)
+    return body[marker.end() :] if marker else body
 
 
 def _normalise(text: str) -> str:

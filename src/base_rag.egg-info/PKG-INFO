@@ -11,6 +11,7 @@ Requires-Dist: openai>=1.0
 Requires-Dist: PyMuPDF>=1.26
 Requires-Dist: python-dotenv>=1.0
 Requires-Dist: PyYAML>=6.0
+Requires-Dist: jieba>=0.42.1
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0; extra == "dev"
 
@@ -22,7 +23,7 @@ Requires-Dist: pytest>=8.0; extra == "dev"
 
 - 本地 PDF（仅可提取文字的 PDF，按页保留引用）；Markdown/MDX；HTML。
 - FAISS `IndexFlatIP` + L2 归一化，实现余弦相似度 Dense Retrieval。
-- 阿里百炼中国内地 OpenAI 兼容接口，默认 `text-embedding-v4` 与 `qwen-plus`。
+- 阿里百炼中国内地 OpenAI 兼容接口；Embedding 与 LLM 模型均由 YAML 配置决定。
 - 强制基于检索证据回答；每次回答都会追加有效来源。无命中时直接拒答。
 
 不支持 OCR、网页抓取、LangChain、BM25/RRF、Reranker、Agent 与前端。
@@ -53,7 +54,7 @@ python -m base_rag ask --config config/default.yaml --question "KDD Cup 2026 Dat
 python -m base_rag eval --config config/default.yaml
 ```
 
-`ingest` 会完整重建索引，并输出文件数、Chunk 数、长度统计和语料哈希。默认要求生成 1000～3000 个 Chunks；若不满足会停止并提示你调整 YAML，而不会悄悄改参数。
+`ingest` 会完整重建索引，并输出文件数、Chunk 数、长度统计和语料哈希。Chunk 数仅作为观测指标，不会限制少量文档或大规模语料的建库。
 
 ## 产物
 

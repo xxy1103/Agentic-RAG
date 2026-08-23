@@ -1,0 +1,42 @@
+# 冻结的 Phase 2 题集；evidence_contains 必须在 ingest 后映射到对应 Chunk。
+questions:
+  - {id: lex-01, split: dev, category: lexical, question: "KDD Cup 2026 的英文比赛目标名称是什么？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "Data Agents for Complex Data Analysis"}], expected_facts: ["Data Agents for Complex Data Analysis"]}
+  - {id: lex-02, split: dev, category: lexical, question: "KDD 比赛提到的复杂任务结构缩写是什么？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "向无环图"}], expected_facts: ["DAG"]}
+  - {id: lex-03, split: dev, category: lexical, question: "通用 Agent 文中使用的思考行动循环名称是什么？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "ReAct"}], expected_facts: ["ReAct"]}
+  - {id: lex-04, split: dev, category: lexical, question: "过程校验运行时构造的证据对象叫什么？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "证据包"}], expected_facts: ["证据包"]}
+  - {id: lex-05, split: dev, category: lexical, question: "预处理将 CSV、JSON 和 SQLite 映射到哪个查询引擎？", answerable: true, relevant: [{source: "主 Agent 运行前预处理流程", evidence_contains: "DuckDB 内存逻辑表"}], expected_facts: ["DuckDB"]}
+  - {id: lex-06, split: dev, category: lexical, question: "表相关性判断模块的代码名是什么？", answerable: true, relevant: [{source: "结构化表相关性判定agent", evidence_contains: "table_relevance_agent"}], expected_facts: ["table_relevance_agent"]}
+  - {id: lex-07, split: dev, category: lexical, question: "数据链路层的帧定界英文术语是什么？", answerable: true, relevant: [{source: "计算机网络第三章--数据链路层", evidence_contains: "Framing"}], expected_facts: ["Framing"]}
+  - {id: lex-08, split: dev, category: lexical, question: "SQL 中用于定义数据库对象的语言缩写是什么？", answerable: true, relevant: [{source: "SQL语言", evidence_contains: "DDL"}], expected_facts: ["DDL"]}
+  - {id: lex-09, split: test, category: lexical, question: "SQL 查询记录的分类缩写是什么？", answerable: true, relevant: [{source: "SQL语言", evidence_contains: "DQL"}], expected_facts: ["DQL"]}
+  - {id: lex-10, split: test, category: lexical, question: "Git 初始化仓库的命令是什么？", answerable: true, relevant: [{source: "git使用", evidence_contains: "git init"}], expected_facts: ["git init"]}
+  - {id: sem-01, split: dev, category: semantic, question: "为什么数据分析智能体不应把百万行表格原样塞进模型上下文？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "超出Token限制"}], expected_facts: ["Token限制", "注意力分散"]}
+  - {id: sem-02, split: dev, category: semantic, question: "比赛里的代理如何把一个复杂问题拆成可执行工作？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "任务分解与规划"}], expected_facts: ["多步骤", "计划"]}
+  - {id: sem-03, split: dev, category: semantic, question: "校验组件为什么不自己重新求解题目？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "它不重新做一遍题"}], expected_facts: ["审计证据", "不负责重新求解"]}
+  - {id: sem-04, split: dev, category: semantic, question: "系统在让主模型推理前，怎样减少它反复摸索文件和表的时间？", answerable: true, relevant: [{source: "主 Agent 运行前预处理流程", evidence_contains: "确定性代码把原始材料规范化"}], expected_facts: ["规范化", "DuckDB", "数据地图"]}
+  - {id: sem-05, split: dev, category: semantic, question: "为什么表筛选模块宁可多保留表也不愿漏掉表？", answerable: true, relevant: [{source: "结构化表相关性判定agent", evidence_contains: "召回优先"}], expected_facts: ["召回优先", "表仍可查询"]}
+  - {id: sem-06, split: dev, category: semantic, question: "把连续比特流组织成数据链路层处理单位的目的是什么？", answerable: true, relevant: [{source: "计算机网络第三章--数据链路层", evidence_contains: "检测和纠正"}], expected_facts: ["检测", "纠正错误"]}
+  - {id: sem-07, split: dev, category: semantic, question: "数据库中负责增加、删除、修改表中数据的是哪一类 SQL？", answerable: true, relevant: [{source: "SQL语言", evidence_contains: "增删改"}], expected_facts: ["DML"]}
+  - {id: sem-08, split: dev, category: semantic, question: "Git 中先查看改动、再把文件放入待提交区域，分别使用什么命令？", answerable: true, relevant: [{source: "git使用", evidence_contains: "git status"}], expected_facts: ["git status", "git add"]}
+  - {id: sem-09, split: test, category: semantic, question: "Data Agent 如何同时处理表格、文档、图表等不同材料？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "异构数据推理"}], expected_facts: ["异构数据"]}
+  - {id: sem-10, split: test, category: semantic, question: "过程校验不通过时，系统如何处理候选答案？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "清空候选答案"}], expected_facts: ["清空候选答案", "反馈动作"]}
+  - {id: mix-01, split: dev, category: mixed, question: "KDD Data Agent 的工具调用能力与最终结果综合分别在流程中做什么？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "工具选择与调用"}], expected_facts: ["选择工具", "综合中间结果"]}
+  - {id: mix-02, split: dev, category: mixed, question: "过程校验会核查字段语义之外的哪两类统计证据？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "指标、单位、时间范围"}], expected_facts: ["指标", "单位", "时间范围"]}
+  - {id: mix-03, split: dev, category: mixed, question: "主 Agent 进入 model_step 前，Semantic Catalog 会经历哪两层准备？", answerable: true, relevant: [{source: "主 Agent 运行前预处理流程", evidence_contains: "完整 Semantic Catalog"}], expected_facts: ["完整 Catalog", "轻量 Catalog"]}
+  - {id: mix-04, split: dev, category: mixed, question: "table_relevance_agent 对相关表和无关表分别怎样影响 Solver 的初始 prompt？", answerable: true, relevant: [{source: "结构化表相关性判定agent", evidence_contains: "相关表继续展示完整 schema"}], expected_facts: ["完整 schema", "一行提示"]}
+  - {id: mix-05, split: dev, category: mixed, question: "数据链路层的 framing 有哪些两种 stuffing 方法？", answerable: true, relevant: [{source: "计算机网络第三章--数据链路层", evidence_contains: "byte stuffing"}], expected_facts: ["byte stuffing", "bit stuffing"]}
+  - {id: mix-06, split: dev, category: mixed, question: "SQL 的 DDL、DML、DQL 分别处理什么？", answerable: true, relevant: [{source: "SQL语言", evidence_contains: "数据定义语言"}], expected_facts: ["定义对象", "增删改", "查询记录"]}
+  - {id: mix-07, split: test, category: mixed, question: "过程校验被触发后，证据链被拒绝会把什么信息交回主 Agent？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "下一步取证动作"}], expected_facts: ["具体问题", "取证动作"]}
+  - {id: mix-08, split: test, category: mixed, question: "Git 将暂存区内容写进本地仓库的命令和关键参数是什么？", answerable: true, relevant: [{source: "git使用", evidence_contains: "git commit -m"}], expected_facts: ["git commit", "-m"]}
+  - {id: amb-01, split: dev, category: ambiguous, question: "那个比赛要人会规划会用工具还得能整合多种数据，说的核心能力是什么？", answerable: true, relevant: [{source: "KDD Cup 2026 Data Agents", evidence_contains: "多步规划、工具调用、异构数据分析"}], expected_facts: ["多步规划", "工具调用", "异构数据"]}
+  - {id: amb-02, split: dev, category: ambiguous, question: "不是最后格式那个，专门查主求解证据靠不靠谱的组件在做什么？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "证据审计员"}], expected_facts: ["审计数据源", "候选结论"]}
+  - {id: amb-03, split: dev, category: ambiguous, question: "表太多先压一压，但以后还是能找回的那个设计为什么安全？", answerable: true, relevant: [{source: "结构化表相关性判定agent", evidence_contains: "表仍在 DuckDB"}], expected_facts: ["软过滤", "仍可查询"]}
+  - {id: amb-04, split: dev, category: ambiguous, question: "文件和视频各种格式先怎么弄，之后模型才开始第一轮？", answerable: true, relevant: [{source: "主 Agent 运行前预处理流程", evidence_contains: "ContextView"}], expected_facts: ["ContextView", "预处理"]}
+  - {id: amb-05, split: dev, category: ambiguous, question: "那个比特流到底怎么知道一帧从哪到哪？", answerable: true, relevant: [{source: "计算机网络第三章--数据链路层", evidence_contains: "where the frame begins and ends"}], expected_facts: ["识别帧边界"]}
+  - {id: amb-06, split: dev, category: ambiguous, question: "查库的那种语句和管权限的那种，名字分别是什么？", answerable: true, relevant: [{source: "SQL语言", evidence_contains: "数据控制语言"}], expected_facts: ["DQL", "DCL"]}
+  - {id: amb-07, split: test, category: ambiguous, question: "主模型还没开始前把各种表统一能查的那一步到底在干嘛？", answerable: true, relevant: [{source: "主 Agent 运行前预处理流程", evidence_contains: "统一暴露为 DuckDB 查询面"}], expected_facts: ["DuckDB", "统一查询"]}
+  - {id: amb-08, split: test, category: ambiguous, question: "只要有个地方能证明来源和结论对不上，它会让后面怎么继续？", answerable: true, relevant: [{source: "队伍过程校验 Agent", evidence_contains: "拒绝则把具体问题"}], expected_facts: ["拒绝", "反馈主 Agent"]}
+  - {id: no-01, split: dev, category: unanswerable, question: "KDD Cup 2026 的冠军奖金金额是多少？", answerable: false, relevant: [], expected_facts: []}
+  - {id: no-02, split: dev, category: unanswerable, question: "这套博客中使用的 Reranker 模型参数量是多少？", answerable: false, relevant: [], expected_facts: []}
+  - {id: no-03, split: test, category: unanswerable, question: "Git 的发明者今天的行程是什么？", answerable: false, relevant: [], expected_facts: []}
+  - {id: no-04, split: test, category: unanswerable, question: "数据链路层实验的标准满分是多少？", answerable: false, relevant: [], expected_facts: []}
