@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from dataclasses import replace
 from typing import Protocol
 from urllib.error import HTTPError, URLError
@@ -12,6 +11,7 @@ from dotenv import load_dotenv
 
 from base_rag.config import ModelsConfig, RerankerConfig
 from base_rag.models import SearchHit
+from base_rag.network import NetworkRequestError, RETRYABLE_HTTP_STATUS_CODES, request_with_retry
 
 
 class Reranker(Protocol):
@@ -62,16 +62,11 @@ class DashScopeReranker:
         return returned
 
     def _retry(self, operation):
-        last_error: Exception | None = None
-        for attempt in range(self.models.max_retries):
-            try:
-                return operation()
-            except Exception as exc:
-                last_error = exc
-                if attempt + 1 < self.models.max_retries:
-                    time.sleep(self.models.retry_backoff_seconds * (2**attempt))
-        assert last_error is not None
-        raise last_error
+        return request_with_retry(
+            operation,
+            max_attempts=self.models.max_retries,
+            retry_delay_seconds=self.models.retry_delay_seconds,
+        )
 
     def _request(self, payload: dict[str, object]) -> dict[str, object]:
         request = Request(
@@ -84,9 +79,13 @@ class DashScopeReranker:
             with urlopen(request, timeout=self.models.timeout_seconds) as response:
                 value = json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
-            raise RuntimeError(f"qwen3-rerank HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}") from exc
+            raise NetworkRequestError(
+                f"qwen3-rerank HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}",
+                status_code=exc.code,
+                retryable=exc.code in RETRYABLE_HTTP_STATUS_CODES,
+            ) from exc
         except URLError as exc:
-            raise RuntimeError(f"qwen3-rerank 网络错误：{exc.reason}") from exc
+            raise NetworkRequestError(f"qwen3-rerank 网络错误：{exc.reason}", retryable=True) from exc
         if not isinstance(value, dict):
             raise ValueError("qwen3-rerank 响应不是对象。")
         return value

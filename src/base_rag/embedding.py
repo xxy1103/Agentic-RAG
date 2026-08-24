@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import os
-import time
 from collections.abc import Iterable
 
 import numpy as np
 from dotenv import load_dotenv
 
 from base_rag.config import ModelsConfig
+from base_rag.network import request_with_retry
 
 
 class DashScopeEmbedder:
@@ -19,7 +19,7 @@ class DashScopeEmbedder:
         from openai import OpenAI
 
         self.config = config
-        self.client = OpenAI(api_key=api_key, base_url=config.api_base, timeout=config.timeout_seconds)
+        self.client = OpenAI(api_key=api_key, base_url=config.api_base, timeout=config.timeout_seconds, max_retries=0)
 
     def embed(self, texts: list[str]) -> np.ndarray:
         if not texts:
@@ -31,16 +31,11 @@ class DashScopeEmbedder:
         return vectors
 
     def _retry(self, operation):
-        last_error: Exception | None = None
-        for attempt in range(self.config.max_retries):
-            try:
-                return operation()
-            except Exception as exc:
-                last_error = exc
-                if attempt + 1 < self.config.max_retries:
-                    time.sleep(self.config.retry_backoff_seconds * (2**attempt))
-        assert last_error is not None
-        raise last_error
+        return request_with_retry(
+            operation,
+            max_attempts=self.config.max_retries,
+            retry_delay_seconds=self.config.retry_delay_seconds,
+        )
 
 
 class DashScopeGenerator:
@@ -52,23 +47,18 @@ class DashScopeGenerator:
         from openai import OpenAI
 
         self.config = config
-        self.client = OpenAI(api_key=api_key, base_url=config.api_base, timeout=config.timeout_seconds)
+        self.client = OpenAI(api_key=api_key, base_url=config.api_base, timeout=config.timeout_seconds, max_retries=0)
 
     def generate(self, prompt: str, temperature: float, max_tokens: int) -> str:
         response = self._retry(lambda: self.client.chat.completions.create(model=self.config.llm_model, messages=[{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens))
         return (response.choices[0].message.content or "证据不足，无法基于已检索文档回答。").strip()
 
     def _retry(self, operation):
-        last_error: Exception | None = None
-        for attempt in range(self.config.max_retries):
-            try:
-                return operation()
-            except Exception as exc:
-                last_error = exc
-                if attempt + 1 < self.config.max_retries:
-                    time.sleep(self.config.retry_backoff_seconds * (2**attempt))
-        assert last_error is not None
-        raise last_error
+        return request_with_retry(
+            operation,
+            max_attempts=self.config.max_retries,
+            retry_delay_seconds=self.config.retry_delay_seconds,
+        )
 
 
 def batches(items: list[str], size: int) -> Iterable[list[str]]:

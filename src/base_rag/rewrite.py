@@ -31,12 +31,13 @@ class QueryRewriter:
     def rewrite(self, question: str) -> QueryAnalysis:
         last_error: Exception | None = None
         for attempt in range(self.models.max_retries):
+            content = self.generator.generate(_prompt(question), 0, self.config.max_tokens)
             try:
-                return _parse(self.generator.generate(_prompt(question), 0, self.config.max_tokens))
-            except Exception as exc:
+                return _parse(content)
+            except (ValueError, json.JSONDecodeError) as exc:
                 last_error = exc
                 if attempt + 1 < self.models.max_retries:
-                    time.sleep(self.models.retry_backoff_seconds * (2**attempt))
+                    time.sleep(self.models.retry_delay_seconds)
         assert last_error is not None
         raise ValueError(f"Query Rewrite 未返回合法 JSON：{last_error}") from last_error
 

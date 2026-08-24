@@ -22,7 +22,7 @@ class ModelsConfig:
     llm_model: str
     timeout_seconds: int
     max_retries: int
-    retry_backoff_seconds: float
+    retry_delay_seconds: float
 
 
 @dataclass(frozen=True)
@@ -75,6 +75,7 @@ class RuntimeConfig:
 class EvaluationConfig:
     judge_enabled: bool = True
     judge_max_tokens: int = 500
+    concurrency: int = 4
 
 
 @dataclass(frozen=True)
@@ -107,9 +108,12 @@ def load_config(config_path: str | Path) -> AppConfig:
         raise ValueError("API Key 只能写在 .env 或环境变量，不能写入 YAML。")
     base = path.parent.parent
     paths = raw["paths"]
+    models = dict(raw["models"])
+    if "retry_delay_seconds" not in models and "retry_backoff_seconds" in models:
+        models["retry_delay_seconds"] = models.pop("retry_backoff_seconds")
     config = AppConfig(
         paths=PathsConfig(**{name: _resolve(base, paths[name]) for name in ("corpus_dir", "index_dir", "runs_dir")} ),
-        models=ModelsConfig(**raw["models"]),
+        models=ModelsConfig(**models),
         ingestion=IngestionConfig(
             allowed_extensions=tuple(item.lower() for item in raw["ingestion"]["allowed_extensions"]),
             **{key: value for key, value in raw["ingestion"].items() if key != "allowed_extensions"},
@@ -148,3 +152,7 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("候选数和 rrf_k 必须为正数。")
     if config.reranker.top_n <= 0:
         raise ValueError("reranker.top_n 必须为正数。")
+    if config.models.max_retries <= 0 or config.models.retry_delay_seconds < 0:
+        raise ValueError("max_retries 必须为正数，retry_delay_seconds 不能为负数。")
+    if config.evaluation.concurrency <= 0:
+        raise ValueError("evaluation.concurrency 必须为正数。")

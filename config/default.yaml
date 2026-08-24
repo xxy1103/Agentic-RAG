@@ -10,7 +10,7 @@ models:
   llm_model: qwen3.7-plus
   timeout_seconds: 60
   max_retries: 3
-  retry_backoff_seconds: 1.5
+  retry_delay_seconds: 5
 
 ingestion:
   allowed_extensions: [".pdf", ".md", ".mdx", ".html", ".htm"]
@@ -49,3 +49,4 @@ runtime:
 evaluation:
   judge_enabled: true
   judge_max_tokens: 500
+  concurrency: 4

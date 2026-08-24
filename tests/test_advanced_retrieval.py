@@ -1,3 +1,5 @@
+import threading
+import time
 from pathlib import Path
 
 import numpy as np
@@ -35,6 +37,11 @@ def _config(tmp_path: Path, advanced: bool = False):
     ])
     path.write_text(raw, encoding="utf-8")
     return load_config(path)
+
+
+def _save_dense_index(config) -> None:
+    chunks = [_chunk("fixture", "并发评测测试索引")]
+    FaissStore.build(np.array([[1.0, 0.0]], dtype=np.float32), chunks, IndexMetadata("fake", 2, "hash", 1, 100, 10)).save(config.paths.index_dir)
 
 
 def test_bm25_preserves_technical_identifier_and_round_trips(tmp_path: Path) -> None:
@@ -96,36 +103,136 @@ def test_advanced_pipeline_records_all_stages(tmp_path: Path) -> None:
     chunks = [_chunk("a", "关键词 证据")]
     FaissStore.build(np.array([[1.0, 0.0]], dtype=np.float32), chunks, IndexMetadata("fake", 2, "hash", 1, 100, 10)).save(config.paths.index_dir)
     BM25Store.build(chunks, "hash").save(config.paths.index_dir)
-    result = ask(config, _Embedder(), _Generator(), "原问题", reranker=_Reranker(), rewriter=_Rewriter())
+    events = []
+    result = ask(config, _Embedder(), _Generator(), "原问题", reranker=_Reranker(), rewriter=_Rewriter(), on_stage=lambda stage, status: events.append((stage, status)))
     assert result["profile"] == "advanced"
     assert result["query_analysis"]["rewritten_query"] == "改写问题"
     assert result["stage_calls"]["rewrite"] == 1 and result["stage_calls"]["rerank"] == 1
+    assert [stage for stage, status in events if status == "completed"] == ["rewrite", "index_load", "bm25_load", "dense_retrieval", "bm25_retrieval", "rrf_fusion", "rerank", "generation"]
 
 
 def test_evaluation_metrics_separate_answerable_questions() -> None:
     records = [
-        {"answerable": True, "source_recall_at_6": True, "chunk_recall_at_6": True, "chunk_recall_at_20": True, "mrr_at_6": 1.0, "ndcg_at_6": 1.0, "category": "lexical", "result": {"elapsed_seconds": 0.2, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}},
-        {"answerable": False, "source_recall_at_6": None, "chunk_recall_at_6": None, "chunk_recall_at_20": None, "mrr_at_6": None, "ndcg_at_6": None, "category": "unanswerable", "result": {"elapsed_seconds": 0.1, "stage_calls": {"embedding": 0, "rewrite": 0, "rerank": 0, "generation": 0}}},
+        {"answerable": True, "source_recall_at_6": True, "chunk_recall_at_6": True, "chunk_recall_at_20": True, "evidence_coverage_at_6": 1.0, "evidence_coverage_at_20": 1.0, "mrr_at_6": 1.0, "ndcg_at_6": 1.0, "refused": False, "category": "lexical", "result": {"elapsed_seconds": 0.2, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}},
+        {"answerable": False, "source_recall_at_6": None, "chunk_recall_at_6": None, "chunk_recall_at_20": None, "evidence_coverage_at_6": None, "evidence_coverage_at_20": None, "mrr_at_6": None, "ndcg_at_6": None, "unanswerable_retrieved": True, "refused": True, "category": "unanswerable", "result": {"elapsed_seconds": 0.1, "stage_calls": {"embedding": 0, "rewrite": 0, "rerank": 0, "generation": 0}}},
     ]
     metrics = _metrics(records)
     assert metrics["questions"] == 2 and metrics["answerable_questions"] == 1
     assert metrics["source_recall_at_6"] == 1.0
+    assert metrics["unanswerable_questions"] == 1
+    assert metrics["unanswerable_retrieval_rate"] == 1.0
+    assert metrics["refusal_success_rate"] == 1.0
+    assert metrics["false_refusal_rate"] == 0.0
+
+
+def test_unanswerable_entry_records_standard_refusal() -> None:
+    entry = {"id": "no", "question": "无答案问题", "answerable": False, "relevant": []}
+    result = {"answer": "证据不足，无法基于已检索文档回答。", "retrieval": {"final": [], "candidates": []}}
+    record = evaluation._score_entry(entry, result)
+    assert record["refused"] is True
+    assert record["unanswerable_retrieved"] is False
+
+
+def test_multi_evidence_coverage_penalises_partial_retrieval() -> None:
+    first = _chunk("a", "第一条核心证据")
+    entry = {
+        "id": "multi",
+        "question": "组合问题",
+        "answerable": True,
+        "relevant": [
+            {"source": "a.md", "evidence_contains": "第一条核心证据"},
+            {"source": "b.md", "evidence_contains": "第二条核心证据"},
+        ],
+    }
+    hit = SearchHit(first, 1.0, 1).to_dict()
+    record = evaluation._score_entry(entry, {"answer": "部分回答", "retrieval": {"final": [hit], "candidates": [hit]}})
+    assert record["chunk_recall_at_6"] is True
+    assert record["evidence_coverage_at_6"] == 0.5
 
 
 def test_evaluation_records_failure_writes_checkpoint_and_continues(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     questions = tmp_path / "questions.yaml"
-    questions.write_text("questions:\n  - id: ok\n    question: 第一题\n  - id: blocked\n    question: 第二题\n", encoding="utf-8")
+    questions.write_text("questions:\n  - {id: ok, split: dev, category: unanswerable, question: 第一题, answerable: false, relevant: [], expected_facts: []}\n  - {id: blocked, split: dev, category: unanswerable, question: 第二题, answerable: false, relevant: [], expected_facts: []}\n", encoding="utf-8")
 
     def fake_ask(config, embedder, generator, question, **kwargs):
         if question == "第二题":
             raise PipelineStageError("generation", ValueError("内容审核拒绝"))
         return {"retrieval": {"final": [], "candidates": []}, "elapsed_seconds": 0.1, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}
 
+    config = _config(tmp_path)
+    _save_dense_index(config)
     monkeypatch.setattr(evaluation, "ask", fake_ask)
     progress = []
     checkpoint = tmp_path / "checkpoint.json"
-    result = evaluation.evaluate(_config(tmp_path), _Embedder(), _Generator(), questions, "dense", checkpoint_path=checkpoint, on_progress=lambda *args: progress.append(args))
+    result = evaluation.evaluate(config, _Embedder(), _Generator(), questions, "dense", checkpoint_path=checkpoint, on_progress=lambda *args: progress.append(args))
     assert [record["status"] for record in result["records"]] == ["ok", "failed"]
     assert result["records"][1]["failure"]["stage"] == "generation"
     assert len(progress) == 2
     assert __import__("json").loads(checkpoint.read_text(encoding="utf-8"))["status"] == "complete"
+
+
+def test_evaluation_filters_split_and_records_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    questions = tmp_path / "questions.yaml"
+    questions.write_text("questions:\n  - {id: dev-question, split: dev, category: unanswerable, question: 开发题, answerable: false, relevant: [], expected_facts: []}\n  - {id: test-question, split: test, category: unanswerable, question: 测试题, answerable: false, relevant: [], expected_facts: []}\n", encoding="utf-8")
+
+    def fake_ask(config, embedder, generator, question, **kwargs):
+        return {"retrieval": {"final": [], "candidates": []}, "elapsed_seconds": 0.1, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}
+
+    config = _config(tmp_path)
+    _save_dense_index(config)
+    monkeypatch.setattr(evaluation, "ask", fake_ask)
+    result = evaluation.evaluate(config, _Embedder(), _Generator(), questions, "dense", split="dev")
+    assert result["split"] == "dev"
+    assert [record["id"] for record in result["records"]] == ["dev-question"]
+    with pytest.raises(ValueError, match="split='missing'"):
+        evaluation.evaluate(config, _Embedder(), _Generator(), questions, "dense", split="missing")
+
+
+def test_split_evaluation_writes_summary_and_report(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    records = [
+        {"status": "ok", "answerable": True, "source_recall_at_6": True, "chunk_recall_at_6": True, "chunk_recall_at_20": True, "evidence_coverage_at_6": 1.0, "evidence_coverage_at_20": 1.0, "mrr_at_6": 1.0, "ndcg_at_6": 1.0, "refused": False, "category": "lexical", "result": {"elapsed_seconds": 0.2, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}},
+        {"status": "ok", "answerable": False, "source_recall_at_6": None, "chunk_recall_at_6": None, "chunk_recall_at_20": None, "evidence_coverage_at_6": None, "evidence_coverage_at_20": None, "mrr_at_6": None, "ndcg_at_6": None, "unanswerable_retrieved": False, "refused": True, "category": "unanswerable", "result": {"elapsed_seconds": 0.1, "stage_calls": {"embedding": 0, "rewrite": 0, "rerank": 0, "generation": 0}}},
+    ]
+    result = {"profile": "dense", "split": "test", "questions_path": "questions.yaml", "status": "complete", "records": records, "metrics": _metrics(records)}
+    artifact_dir = evaluation.write_evaluation_artifact(config, result)
+    assert artifact_dir.parent == config.paths.runs_dir / "dense"
+    assert artifact_dir.name.endswith("-test")
+    summary = __import__("json").loads((artifact_dir / "summary.json").read_text(encoding="utf-8"))
+    assert summary["kind"] == "split_evaluation"
+    assert summary["evaluation"]["split"] == "test"
+    report = (artifact_dir / "REPORT.md").read_text(encoding="utf-8")
+    assert "测试集评测报告" in report and "Evidence Coverage@6" in report
+
+
+def test_evaluation_runs_questions_concurrently_but_preserves_question_order(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    questions = tmp_path / "questions.yaml"
+    questions.write_text(
+        "questions:\n"
+        "  - {id: q1, split: dev, category: unanswerable, question: 第一题, answerable: false, relevant: [], expected_facts: []}\n"
+        "  - {id: q2, split: dev, category: unanswerable, question: 第二题, answerable: false, relevant: [], expected_facts: []}\n"
+        "  - {id: q3, split: dev, category: unanswerable, question: 第三题, answerable: false, relevant: [], expected_facts: []}\n"
+        "  - {id: q4, split: dev, category: unanswerable, question: 第四题, answerable: false, relevant: [], expected_facts: []}\n",
+        encoding="utf-8",
+    )
+    config = _config(tmp_path)
+    _save_dense_index(config)
+    lock = threading.Lock()
+    active = 0
+    maximum_active = 0
+
+    def fake_ask(config, embedder, generator, question, **kwargs):
+        nonlocal active, maximum_active
+        with lock:
+            active += 1
+            maximum_active = max(maximum_active, active)
+        time.sleep(0.05)
+        with lock:
+            active -= 1
+        return {"retrieval": {"final": [], "candidates": []}, "elapsed_seconds": 0.05, "stage_calls": {"embedding": 1, "rewrite": 0, "rerank": 0, "generation": 0}}
+
+    monkeypatch.setattr(evaluation, "ask", fake_ask)
+    result = evaluation.evaluate(config, _Embedder(), _Generator(), questions, "dense", split="dev")
+
+    assert maximum_active >= 2
+    assert [record["id"] for record in result["records"]] == ["q1", "q2", "q3", "q4"]

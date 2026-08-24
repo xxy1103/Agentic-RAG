@@ -51,7 +51,8 @@ Copy-Item .env.example .env
 python scripts/snapshot_blog_corpus.py --source "A:\XXY\blog\xxy1103.github.io\src\content\blog"
 python -m base_rag ingest --config config/default.yaml
 python -m base_rag ask --config config/default.yaml --question "KDD Cup 2026 Data Agents 比赛强调哪些能力？"
-python -m base_rag eval --config config/default.yaml
+python -m base_rag eval-dev --config config/default.yaml
+python -m base_rag eval-test --config config/default.yaml
 ```
 
 `ingest` 会完整重建索引，并输出文件数、Chunk 数、长度统计和语料哈希。Chunk 数仅作为观测指标，不会限制少量文档或大规模语料的建库。
@@ -61,7 +62,7 @@ python -m base_rag eval --config config/default.yaml
 - `data/raw/`：70 篇博客快照。
 - `data/corpus_manifest.json`：原始路径、快照路径、主题、标题、标签、字符数和 SHA-256。
 - `data/index/`：FAISS 索引、Chunk 元数据与构建参数。
-- `runs/`：每次问答的检索结果、分数、Prompt、答案、引用、模型和耗时；不包含密钥。
+- `runs/<profile>/`：每次问答按 Profile 保存的检索结果、分数、Prompt、答案、引用、模型和耗时；不包含密钥。
 
 ## 验证
 
@@ -69,7 +70,7 @@ python -m base_rag eval --config config/default.yaml
 python -m pytest
 ```
 
-离线测试使用假 Embedding/LLM，覆盖三类 Loader、切块稳定性、配置安全、FAISS 保存/重载、引用和运行记录。设置真实 API Key 后，再执行 ingest、ask 和 10 题 eval 完成在线冒烟验证。
+离线测试使用假 Embedding/LLM，覆盖三类 Loader、切块稳定性、配置安全、FAISS 保存/重载、引用和运行记录。设置真实 API Key 后，再执行 ingest、ask 和开发集评测完成在线冒烟验证；测试集仅用于最终验证。
 
 ## 后续学习路线
 

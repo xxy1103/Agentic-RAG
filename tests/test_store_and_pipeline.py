@@ -38,7 +38,11 @@ def test_answer_saves_valid_retrieval_citations(tmp_path: Path) -> None:
     config = load_config(config_path)
     chunk = Chunk("x", "证据正文", "s", "source.md", "markdown", 0, section="章节")
     FaissStore.build(np.array([[1.0, 0.0]], dtype=np.float32), [chunk], IndexMetadata("fake", 2, "h", 1, 100, 10)).save(config.paths.index_dir)
-    result = ask(config, FakeEmbedder(), FakeGenerator(), "问题")
+    evaluation_questions_dir = config.paths.runs_dir / "dense" / "evaluation" / "questions"
+    result = ask(config, FakeEmbedder(), FakeGenerator(), "问题", run_log_dir=evaluation_questions_dir)
     assert result["citations"] == ["source.md｜章节"]
     assert "参考来源" in result["answer"]
-    assert list(config.paths.runs_dir.glob("*.json"))
+    saved_runs = list(evaluation_questions_dir.glob("*.json"))
+    assert len(saved_runs) == 1
+    assert not list((config.paths.runs_dir / "dense").glob("*.json"))
+    assert not list(config.paths.runs_dir.glob("*.json"))

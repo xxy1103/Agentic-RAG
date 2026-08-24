@@ -16,3 +16,5 @@ def test_default_config_has_no_secret() -> None:
     config = load_config("config/default.yaml")
     assert "DASHSCOPE_API_KEY" not in str(config.safe_dict())
     assert config.ingestion.chunk_overlap < config.ingestion.chunk_size
+    assert config.evaluation.concurrency == 4
+    assert config.models.retry_delay_seconds == 5

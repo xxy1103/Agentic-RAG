@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Protocol
 
 import numpy as np
 
@@ -28,6 +28,9 @@ class Embedder(Protocol):
 
 class Generator(Protocol):
     def generate(self, prompt: str, temperature: float, max_tokens: int) -> str: ...
+
+
+StageProgressCallback = Callable[[str, str], None]
 
 
 class PipelineStageError(RuntimeError):
@@ -113,6 +116,10 @@ def ask(
     reranker: Reranker | None = None,
     rewriter: QueryRewriter | None = None,
     generate: bool = True,
+    on_stage: StageProgressCallback | None = None,
+    dense_store: FaissStore | None = None,
+    bm25_store: BM25Store | None = None,
+    run_log_dir: Path | None = None,
 ) -> dict[str, object]:
     started = time.perf_counter()
     selected = profile_for(config, profile)
@@ -121,29 +128,35 @@ def ask(
     analysis: QueryAnalysis | None = None
     if selected.rewrite:
         rewrite_started = time.perf_counter()
-        analysis = _run_stage("rewrite", lambda: (rewriter or QueryRewriter(generator, config.models, config.query_rewrite)).rewrite(question))
+        analysis = _run_stage("rewrite", lambda: (rewriter or QueryRewriter(generator, config.models, config.query_rewrite)).rewrite(question), on_stage)
         stage_seconds["rewrite"] = round(time.perf_counter() - rewrite_started, 3)
         stage_calls["rewrite"] += 1
     dense_query = analysis.rewritten_query if analysis else question
     sparse_query = " ".join([analysis.rewritten_query, *analysis.keywords]) if analysis else question
 
-    dense_store = _run_stage("index_load", lambda: FaissStore.load(config.paths.index_dir, config.models.embedding_model, config.models.embedding_dimensions))
-    bm25_store = _run_stage("bm25_load", lambda: BM25Store.load(config.paths.index_dir, dense_store.chunks, dense_store.metadata.corpus_hash)) if selected.bm25 else None
+    if dense_store is None:
+        dense_store = _run_stage("index_load", lambda: FaissStore.load(config.paths.index_dir, config.models.embedding_model, config.models.embedding_dimensions), on_stage)
+    else:
+        _notify_stage(on_stage, "index_load", "completed")
+    if selected.bm25 and bm25_store is None:
+        bm25_store = _run_stage("bm25_load", lambda: BM25Store.load(config.paths.index_dir, dense_store.chunks, dense_store.metadata.corpus_hash), on_stage)
+    elif selected.bm25:
+        _notify_stage(on_stage, "bm25_load", "completed")
     dense_hits: list[SearchHit] = []
     if selected.dense:
         dense_started = time.perf_counter()
-        dense_hits = _run_stage("dense_retrieval", lambda: dense_store.search(embedder.embed([dense_query])[0], config.retrieval.dense_candidate_k, config.retrieval.min_score))
+        dense_hits = _run_stage("dense_retrieval", lambda: dense_store.search(embedder.embed([dense_query])[0], config.retrieval.dense_candidate_k, config.retrieval.min_score), on_stage)
         stage_seconds["dense"] = round(time.perf_counter() - dense_started, 3)
         stage_calls["embedding"] += 1
     bm25_hits: list[SearchHit] = []
     if bm25_store:
         sparse_started = time.perf_counter()
-        bm25_hits = _run_stage("bm25_retrieval", lambda: bm25_store.search(sparse_query, config.retrieval.sparse_candidate_k))
+        bm25_hits = _run_stage("bm25_retrieval", lambda: bm25_store.search(sparse_query, config.retrieval.sparse_candidate_k), on_stage)
         stage_seconds["bm25"] = round(time.perf_counter() - sparse_started, 3)
 
     if selected.dense and selected.bm25:
         fusion_started = time.perf_counter()
-        candidates = _run_stage("rrf_fusion", lambda: fuse_rrf(dense_hits, bm25_hits, config.retrieval.fusion_candidate_k, config.retrieval.rrf_k))
+        candidates = _run_stage("rrf_fusion", lambda: fuse_rrf(dense_hits, bm25_hits, config.retrieval.fusion_candidate_k, config.retrieval.rrf_k), on_stage)
         stage_seconds["rrf"] = round(time.perf_counter() - fusion_started, 3)
     elif selected.dense:
         candidates = dense_hits
@@ -153,20 +166,23 @@ def ask(
     final_hits = candidates[: config.retrieval.top_k]
     if selected.rerank and candidates:
         rerank_started = time.perf_counter()
-        final_hits = _run_stage("rerank", lambda: (reranker or DashScopeReranker(config.models, config.reranker)).rerank(question, candidates, config.reranker.top_n))
+        final_hits = _run_stage("rerank", lambda: (reranker or DashScopeReranker(config.models, config.reranker)).rerank(question, candidates, config.reranker.top_n), on_stage)
         stage_seconds["rerank"] = round(time.perf_counter() - rerank_started, 3)
         stage_calls["rerank"] += 1
+    elif selected.rerank:
+        _notify_stage(on_stage, "rerank", "skipped")
 
     prompt = ""
     answer: str | None = None
     if generate:
         if not final_hits:
             answer = "证据不足，无法基于已检索文档回答。"
+            _notify_stage(on_stage, "generation", "skipped")
         else:
             context = _context(final_hits, config.retrieval.max_context_characters)
             prompt = _prompt(question, context)
             generation_started = time.perf_counter()
-            answer = _run_stage("generation", lambda: generator.generate(prompt, config.generation.temperature, config.generation.max_tokens))
+            answer = _run_stage("generation", lambda: generator.generate(prompt, config.generation.temperature, config.generation.max_tokens), on_stage)
             stage_seconds["generation"] = round(time.perf_counter() - generation_started, 3)
             stage_calls["generation"] += 1
     citations = [_citation(hit) for hit in final_hits]
@@ -194,7 +210,7 @@ def ask(
         "elapsed_seconds": round(time.perf_counter() - started, 3),
     }
     if config.runtime.save_runs:
-        _save_run(config.paths.runs_dir, result, config.safe_dict())
+        _save_run(run_log_dir or config.paths.runs_dir / selected.name, result, config.safe_dict())
     return result
 
 
@@ -211,13 +227,23 @@ def _context(hits: list[SearchHit], limit: int) -> str:
     return "\n\n".join(blocks)
 
 
-def _run_stage(stage: str, operation):
+def _run_stage(stage: str, operation, on_stage: StageProgressCallback | None = None):
+    _notify_stage(on_stage, stage, "running")
     try:
-        return operation()
+        result = operation()
     except PipelineStageError:
+        _notify_stage(on_stage, stage, "failed")
         raise
     except Exception as exc:
+        _notify_stage(on_stage, stage, "failed")
         raise PipelineStageError(stage, exc) from exc
+    _notify_stage(on_stage, stage, "completed")
+    return result
+
+
+def _notify_stage(on_stage: StageProgressCallback | None, stage: str, status: str) -> None:
+    if on_stage:
+        on_stage(stage, status)
 
 
 def _embedding_text(chunk: Chunk) -> str:
@@ -234,10 +260,10 @@ def _citation(hit: SearchHit) -> str:
     return f"{Path(hit.chunk.source_path).name}｜{location}"
 
 
-def _save_run(runs_dir: Path, result: dict[str, object], config: dict[str, object]) -> None:
-    runs_dir.mkdir(parents=True, exist_ok=True)
+def _save_run(log_dir: Path, result: dict[str, object], config: dict[str, object]) -> None:
+    log_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    (runs_dir / f"{stamp}.json").write_text(json.dumps({"result": result, "config": config}, ensure_ascii=False, indent=2), encoding="utf-8")
+    (log_dir / f"{stamp}.json").write_text(json.dumps({"result": result, "config": config}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _corpus_hash(files: list[Path]) -> str:
