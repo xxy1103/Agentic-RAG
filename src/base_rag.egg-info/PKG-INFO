@@ -51,8 +51,7 @@ Copy-Item .env.example .env
 python scripts/snapshot_blog_corpus.py --source "A:\XXY\blog\xxy1103.github.io\src\content\blog"
 python -m base_rag ingest --config config/default.yaml
 python -m base_rag ask --config config/default.yaml --question "KDD Cup 2026 Data Agents 比赛强调哪些能力？"
-python -m base_rag eval-dev --config config/default.yaml
-python -m base_rag eval-test --config config/default.yaml
+python -m base_rag eval --config config/default.yaml
 ```
 
 `ingest` 会完整重建索引，并输出文件数、Chunk 数、长度统计和语料哈希。Chunk 数仅作为观测指标，不会限制少量文档或大规模语料的建库。

@@ -73,8 +73,6 @@ class RuntimeConfig:
 
 @dataclass(frozen=True)
 class EvaluationConfig:
-    judge_enabled: bool = True
-    judge_max_tokens: int = 500
     concurrency: int = 4
 
 

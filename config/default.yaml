@@ -47,6 +47,4 @@ runtime:
   default_profile: advanced
 
 evaluation:
-  judge_enabled: true
-  judge_max_tokens: 500
   concurrency: 4
