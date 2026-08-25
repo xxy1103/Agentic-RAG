@@ -1,7 +1,10 @@
 paths:
-  corpus_dir: data/raw
-  index_dir: data/index
-  runs_dir: runs
+  corpus_dir: data/multihoprag/raw
+  index_dir: data/multihoprag/index
+  runs_dir: runs/multihoprag
+
+multihoprag:
+  dataset_dir: data/multihoprag
 
 models:
   api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -13,14 +16,14 @@ models:
   retry_delay_seconds: 5
 
 ingestion:
-  allowed_extensions: [".pdf", ".md", ".mdx", ".html", ".htm"]
+  allowed_extensions: [".md"]
   chunk_size: 1000
   chunk_overlap: 150
   embedding_batch_size: 16
   fail_on_error: true
 
 retrieval:
-  top_k: 6
+  top_k: 10
   min_score: 0.25
   max_context_characters: 9000
   dense_candidate_k: 20
@@ -31,13 +34,13 @@ retrieval:
 query_rewrite:
   enabled: true
   max_tokens: 400
-  language: zh
+  language: en
 
 reranker:
   enabled: true
   model: qwen3-rerank
-  top_n: 6
-  instruct: "Given a web search query, retrieve relevant passages that answer the query."
+  top_n: 10
+  instruct: "Given a multi-hop question, retrieve passages that jointly provide all required evidence."
 
 generation:
   temperature: 0.1

@@ -10,11 +10,13 @@ from base_rag.bm25 import BM25Store, tokenize
 from base_rag.config import load_config
 from base_rag.evaluation import _metrics
 from base_rag.models import Chunk, SearchHit
+from base_rag.multihoprag import _build_manifest, _document_key, _metrics as multihop_metrics
+from base_rag.multihoprag import _score_query, prepare_multihoprag
 from base_rag.pipeline import ask
 from base_rag.pipeline import PipelineStageError
 from base_rag.rerank import DashScopeReranker
 from base_rag.retrieval import fuse_rrf
-from base_rag.rewrite import _parse
+from base_rag.rewrite import _parse, _prompt as rewrite_prompt
 from base_rag.store import FaissStore, IndexMetadata
 
 
@@ -87,6 +89,62 @@ def test_phase2_specialized_questions_preserve_retrieval_capability_boundaries()
     assert [item["id"] for item in multi_document] == [f"evidence-{index:02d}" for index in range(1, 7)]
 
 
+def test_prepare_multihoprag_converts_corpus_and_preserves_gold_identity(tmp_path: Path) -> None:
+    config_path = tmp_path / "config" / "multihoprag.yaml"
+    config_path.parent.mkdir()
+    config_path.write_text(
+        "\n".join([
+            "paths:", "  corpus_dir: data/multihoprag/raw", "  index_dir: data/multihoprag/index", "  runs_dir: runs/multihoprag",
+            "multihoprag:", "  dataset_dir: data/multihoprag",
+            "models:", "  api_base: http://example.test", "  embedding_model: fake", "  embedding_dimensions: 2", "  llm_model: fake", "  timeout_seconds: 1", "  max_retries: 1", "  retry_delay_seconds: 0",
+            "ingestion:", "  allowed_extensions: ['.md']", "  chunk_size: 100", "  chunk_overlap: 10", "  embedding_batch_size: 1", "  fail_on_error: true",
+            "retrieval:", "  top_k: 10", "  min_score: 0", "  max_context_characters: 1000",
+            "generation:", "  temperature: 0", "  max_tokens: 10", "runtime:", "  save_runs: false", "  default_profile: dense", "",
+        ]),
+        encoding="utf-8",
+    )
+    corpus = [{"title": "A title", "author": "Author", "source": "Example", "published_at": "2024-01-01", "category": "news", "url": "https://example.test/a", "body": "The essential fact is here."}]
+    queries = [{"query": "What is essential?", "answer": "fact", "question_type": "inference_query", "evidence_list": [{"title": "A title", "author": "Author", "source": "Example", "published_at": "2024-01-01", "category": "news", "url": "https://example.test/a", "fact": "The essential fact is here."}]}]
+    payloads = iter([__import__("json").dumps(queries).encode(), __import__("json").dumps(corpus).encode()])
+    progress = []
+    result = prepare_multihoprag(load_config(config_path), download=lambda _: next(payloads), on_progress=lambda *event: progress.append(event))
+    manifest = __import__("json").loads(Path(result["manifest"]).read_text(encoding="utf-8"))
+    source = manifest["queries"][0]["gold"][0]["source"]
+    assert result["documents"] == result["queries"] == 1
+    assert manifest["queries"][0]["gold"][0]["fact"] == "The essential fact is here."
+    assert "## Metadata" in (Path(result["corpus_dir"]) / source).read_text(encoding="utf-8")
+    assert [event[0] for event in progress] == ["下载数据", "下载数据", "转换语料", "映射 Gold", "写入清单"]
+    with pytest.raises(ValueError, match="已准备"):
+        prepare_multihoprag(load_config(config_path), download=lambda _: b"[]")
+
+
+def test_multihoprag_metrics_distinguish_any_hit_from_complete_evidence() -> None:
+    first = Chunk("a", "first required fact", "a", "doc-a.md", "markdown", 0)
+    gold = [
+        {"source": "doc-a.md", "fact": "first required fact", "fact_key": "first", "normalised_fact": "firstrequiredfact"},
+        {"source": "doc-b.md", "fact": "second required fact", "fact_key": "second", "normalised_fact": "secondrequiredfact"},
+    ]
+    record = _score_query(
+        {"id": "q1", "query": "question", "answer": "answer", "question_type": "inference_query", "gold": gold},
+        {"retrieval": {"final": [SearchHit(first, 1.0, 1).to_dict()]}, "elapsed_seconds": 0.2},
+    )
+    metrics = multihop_metrics([record])
+    assert record["official_hits_at_4"] is True
+    assert record["complete_evidence_at_4"] is False
+    assert metrics["evidence_coverage_at_4"] == 0.5
+    assert metrics["complete_evidence_at_10"] == 0.0
+
+
+def test_prepare_multihoprag_preserves_null_query_without_scoring_gold() -> None:
+    corpus = [{"title": "A", "author": None, "source": "Example", "published_at": "2024", "category": "news", "url": "https://example.test/a", "body": "body"}]
+    manifest = _build_manifest(
+        [{"query": "No answer", "answer": "Insufficient Information", "question_type": "null_query", "evidence_list": []}], corpus,
+        [{"key": _document_key(corpus[0]), "source": "doc-a.md"}],
+    )
+    assert manifest["queries"][0]["question_type"] == "null_query"
+    assert manifest["queries"][0]["gold"] == []
+
+
 def test_rrf_merges_scores_and_rank_provenance() -> None:
     first, second = _chunk("a", "甲"), _chunk("b", "乙")
     dense = [SearchHit(first, 0.9, 1, dense_score=0.9, dense_rank=1)]
@@ -100,6 +158,16 @@ def test_rewrite_json_validation() -> None:
     assert _parse('{"intent":"查询","rewritten_query":"查询 BM25","keywords":["BM25"]}').keywords == ["BM25"]
     with pytest.raises(ValueError):
         _parse('{"intent":"x","rewritten_query":"y","keywords":[]}')
+
+
+def test_query_rewrite_prompt_uses_configured_or_auto_language() -> None:
+    english = rewrite_prompt("Which sources support the claim?", "en")
+    chinese = rewrite_prompt("哪些来源支持这个结论？", "zh")
+    assert "You are a RAG query-understanding component" in english
+    assert "do not translate" in english
+    assert "你是 RAG 查询理解器" in chinese
+    assert rewrite_prompt("英文问题", "auto") == rewrite_prompt("英文问题", "zh")
+    assert rewrite_prompt("English question", "auto") == rewrite_prompt("English question", "en")
 
 
 def test_reranker_rejects_duplicate_indices(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

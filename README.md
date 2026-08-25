@@ -54,6 +54,32 @@ python -m pytest
 
 每次 `eval` 都会在 `runs/retrieval-evaluations/<时间戳>/` 写入一次完整的消融批次：根目录的 `summary.json` 与 `REPORT.md` 横向比较全部 Profile，`profiles/<profile>/` 下保存每个 Profile 的 `summary.json`、`REPORT.md` 和 `questions/` 下全部 60 道题的检索运行记录。
 
+## 独立公开基准：MultiHop-RAG
+
+本地中文语料评测和公开 MultiHop-RAG 基准严格分离：前者继续使用 `eval` 与 `config/default.yaml`；后者使用自己的公开英文语料、索引、配置和运行产物，绝不写入 `data/raw`、`data/index` 或本地题集。
+
+```powershell
+# 首次下载公开数据、转换为 Markdown，并生成可复核的 Gold 证据清单。
+python -m base_rag prepare-multihop
+
+# 用独立索引建立公开基准语料库。
+python -m base_rag ingest --config config/multihoprag.yaml
+
+# 默认比较全部五种 Profile；只执行检索，不调用最终答案生成。
+python -m base_rag eval-multihop
+
+# 先以 20 题验证某一个 Profile；不会影响完整结果目录。
+python -m base_rag eval-multihop --profile advanced --limit 20
+```
+
+`prepare-multihop` 下载 [MultiHop-RAG](https://huggingface.co/datasets/yixuantt/MultiHopRAG) 的 `corpus.json` 与 `MultiHopRAG.json`，记录两个文件的 SHA-256，并将每篇文档的标题、作者、来源、发布时间、类别、URL 和正文写入独立 Markdown 语料。`--force` 才会重新下载和转换已准备的基准。
+
+`eval-multihop` 的结果写入 `runs/multihoprag/evaluations/<时间戳>/`。报告同时给出两类指标：严格的 `Evidence Coverage@4/@10` 与 `Complete Evidence@4/@10` 要求覆盖每题全部 Gold 事实；`Hits@4/@10`、`MAP@10`、`MRR@10` 使用公开仓库的字符串包含式检索口径，便于横向对照。该公开基准是英文跨文档检索评测，不等同于本地中文知识库效果，也不包含端到端答案正确率。
+
+Query Rewrite 通过 `query_rewrite.language` 选择指令语言：本地配置固定为 `zh`，MultiHop-RAG 固定为 `en`；如语料本身混合多种语言，可设为 `auto`，它会按问题中是否含中文字符选择对应指令。三种取值均要求改写结果保持问题原语言。
+
+`prepare-multihop` 和 `ingest` 会显示阶段进度条；`eval` 与 `eval-multihop` 会按 Profile 显示题目完成进度、成功数与失败数。
+
 评测默认在同一个 Profile 内并发执行 4 道题；并发数可通过 `evaluation.concurrency` 调整，设为 `1` 即恢复串行。并发模式显示线程安全的题目总进度，串行模式额外显示当前题目的阶段进度。FAISS/BM25 索引在每个 Profile 内只加载一次，结果始终按题集原顺序保存。
 
 Embedding、生成和 Rerank 请求遇到连接失败、超时、HTTP 408/409/425/429 或 5xx 时，会按照 `models.max_retries` 自动重试，并在每次重试前固定等待 `models.retry_delay_seconds`（默认 5 秒）。鉴权失败、参数错误等不可恢复请求立即失败。单题最终失败后仍会记录题号、失败阶段和原始错误并继续评测；失败题按 0 分计入检索指标，并在汇总中单独可查。

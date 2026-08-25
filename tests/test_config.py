@@ -18,3 +18,9 @@ def test_default_config_has_no_secret() -> None:
     assert config.ingestion.chunk_overlap < config.ingestion.chunk_size
     assert config.evaluation.concurrency == 4
     assert config.models.retry_delay_seconds == 5
+    assert config.query_rewrite.language == "zh"
+
+
+def test_multihoprag_config_uses_english_query_rewrite_prompt() -> None:
+    config = load_config("config/multihoprag.yaml")
+    assert config.query_rewrite.language == "en"

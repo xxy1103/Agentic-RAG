@@ -4,4 +4,5 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 data/index/
+data/multihoprag/
 runs/

@@ -49,6 +49,7 @@ class RetrievalConfig:
 class QueryRewriteConfig:
     enabled: bool = False
     max_tokens: int = 400
+    language: str = "zh"
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,11 @@ class EvaluationConfig:
 
 
 @dataclass(frozen=True)
+class MultiHopRAGConfig:
+    dataset_dir: Path
+
+
+@dataclass(frozen=True)
 class AppConfig:
     paths: PathsConfig
     models: ModelsConfig
@@ -87,6 +93,7 @@ class AppConfig:
     generation: GenerationConfig
     runtime: RuntimeConfig
     evaluation: EvaluationConfig
+    multihoprag: MultiHopRAGConfig | None
     config_path: Path
 
     def safe_dict(self) -> dict[str, Any]:
@@ -94,6 +101,8 @@ class AppConfig:
         data["config_path"] = str(self.config_path)
         for key in ("corpus_dir", "index_dir", "runs_dir"):
             data["paths"][key] = str(data["paths"][key])
+        if data["multihoprag"] is not None:
+            data["multihoprag"]["dataset_dir"] = str(data["multihoprag"]["dataset_dir"])
         return data
 
 
@@ -122,6 +131,7 @@ def load_config(config_path: str | Path) -> AppConfig:
         generation=GenerationConfig(**raw["generation"]),
         runtime=RuntimeConfig(**raw["runtime"]),
         evaluation=EvaluationConfig(**raw.get("evaluation", {})),
+        multihoprag=MultiHopRAGConfig(dataset_dir=_resolve(base, raw["multihoprag"]["dataset_dir"])) if "multihoprag" in raw else None,
         config_path=path,
     )
     _validate(config)
@@ -150,6 +160,8 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("候选数和 rrf_k 必须为正数。")
     if config.reranker.top_n <= 0:
         raise ValueError("reranker.top_n 必须为正数。")
+    if config.query_rewrite.language not in {"auto", "zh", "en"}:
+        raise ValueError("query_rewrite.language 只能是 auto、zh 或 en。")
     if config.models.max_retries <= 0 or config.models.retry_delay_seconds < 0:
         raise ValueError("max_retries 必须为正数，retry_delay_seconds 不能为负数。")
     if config.evaluation.concurrency <= 0:

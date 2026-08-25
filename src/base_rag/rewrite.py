@@ -31,7 +31,7 @@ class QueryRewriter:
     def rewrite(self, question: str) -> QueryAnalysis:
         last_error: Exception | None = None
         for attempt in range(self.models.max_retries):
-            content = self.generator.generate(_prompt(question), 0, self.config.max_tokens)
+            content = self.generator.generate(_prompt(question, self.config.language), 0, self.config.max_tokens)
             try:
                 return _parse(content)
             except (ValueError, json.JSONDecodeError) as exc:
@@ -42,12 +42,27 @@ class QueryRewriter:
         raise ValueError(f"Query Rewrite 未返回合法 JSON：{last_error}") from last_error
 
 
-def _prompt(question: str) -> str:
+def _prompt(question: str, language: str = "zh") -> str:
+    selected = _resolve_language(language, question)
+    if selected == "en":
+        return f"""You are a RAG query-understanding component. Analyze the user's question and output exactly one JSON object, with no Markdown, explanation, or code fence.
+The JSON object must contain exactly: intent (string), rewritten_query (string), and keywords (array of strings).
+Resolve references and missing context in rewritten_query while preserving the original meaning. Keep intent, rewritten_query, and keywords in the same language as the user's question; do not translate them. keywords must contain only entities, technical terms, abbreviations, version numbers, and constraints.
+
+User question: {question}"""
     return f"""你是 RAG 查询理解器。分析用户问题并只输出一个 JSON 对象，不要 Markdown、解释或代码块。
 JSON 必须严格含有 intent（字符串）、rewritten_query（字符串）和 keywords（字符串数组）。
 rewritten_query 应补全指代与上下文，保持原意；keywords 只保留实体、术语、缩写、版本号和限定词。
 
 用户问题：{question}"""
+
+
+def _resolve_language(language: str, question: str) -> str:
+    if language == "auto":
+        return "zh" if any("\u4e00" <= char <= "\u9fff" for char in question) else "en"
+    if language in {"zh", "en"}:
+        return language
+    raise ValueError("Query Rewrite language 只能是 auto、zh 或 en。")
 
 
 def _parse(content: str) -> QueryAnalysis:

@@ -31,6 +31,7 @@ class Generator(Protocol):
 
 
 StageProgressCallback = Callable[[str, str], None]
+IngestProgressCallback = Callable[[str, int, int, str], None]
 
 
 class PipelineStageError(RuntimeError):
@@ -73,28 +74,42 @@ def profile_for(config: AppConfig, name: str | None) -> RetrievalProfile:
     return profile
 
 
-def ingest(config: AppConfig, embedder: Embedder) -> dict[str, object]:
+def ingest(config: AppConfig, embedder: Embedder, on_progress: IngestProgressCallback | None = None) -> dict[str, object]:
     files = sorted(path for path in config.paths.corpus_dir.rglob("*") if path.is_file() and path.suffix.lower() in config.ingestion.allowed_extensions)
     if not files:
         raise ValueError(f"语料目录没有支持的文件：{config.paths.corpus_dir}")
     documents = []
     errors: list[str] = []
-    for path in files:
+    for completed, path in enumerate(files, start=1):
         try:
             documents.extend(load_path(path))
         except Exception as exc:
             errors.append(f"{path}: {exc}")
+        if on_progress:
+            on_progress("读取文档", completed, len(files), path.name)
     if errors and config.ingestion.fail_on_error:
         raise ValueError("文档解析失败：\n" + "\n".join(errors))
     chunks = chunk_documents(documents, config.ingestion.chunk_size, config.ingestion.chunk_overlap)
     if not chunks:
         raise ValueError("没有生成 Chunk。")
-    vectors = np.vstack([embedder.embed(batch) for batch in batches([_embedding_text(chunk) for chunk in chunks], config.ingestion.embedding_batch_size)])
+    if on_progress:
+        on_progress("切分文档", 1, 1, f"{len(chunks)} 个 Chunk")
+    embedding_inputs = [_embedding_text(chunk) for chunk in chunks]
+    batch_size = config.ingestion.embedding_batch_size
+    batch_total = (len(embedding_inputs) + batch_size - 1) // batch_size
+    vectors_by_batch = []
+    for completed, batch in enumerate(batches(embedding_inputs, batch_size), start=1):
+        vectors_by_batch.append(embedder.embed(batch))
+        if on_progress:
+            on_progress("向量化", completed, batch_total, f"{min(completed * batch_size, len(chunks))}/{len(chunks)} 个 Chunk")
+    vectors = np.vstack(vectors_by_batch)
     corpus_hash = _corpus_hash(files)
     metadata = IndexMetadata(config.models.embedding_model, config.models.embedding_dimensions, corpus_hash, len(chunks), config.ingestion.chunk_size, config.ingestion.chunk_overlap)
     FaissStore.build(vectors, chunks, metadata).save(config.paths.index_dir)
     bm25 = BM25Store.build(chunks, corpus_hash)
     bm25.save(config.paths.index_dir)
+    if on_progress:
+        on_progress("保存索引", 1, 1, "FAISS + BM25")
     lengths = [len(chunk.text) for chunk in chunks]
     return {
         "files": len(files),
