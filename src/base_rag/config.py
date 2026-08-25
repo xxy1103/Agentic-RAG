@@ -83,6 +83,15 @@ class MultiHopRAGConfig:
 
 
 @dataclass(frozen=True)
+class AgenticConfig:
+    base_profile: str = "hybrid-rerank"
+    max_hops: int = 3
+    max_corrections_per_hop: int = 1
+    structured_output_retries: int = 1
+    recursion_limit: int = 25
+
+
+@dataclass(frozen=True)
 class AppConfig:
     paths: PathsConfig
     models: ModelsConfig
@@ -94,6 +103,7 @@ class AppConfig:
     runtime: RuntimeConfig
     evaluation: EvaluationConfig
     multihoprag: MultiHopRAGConfig | None
+    agentic: AgenticConfig
     config_path: Path
 
     def safe_dict(self) -> dict[str, Any]:
@@ -132,6 +142,7 @@ def load_config(config_path: str | Path) -> AppConfig:
         runtime=RuntimeConfig(**raw["runtime"]),
         evaluation=EvaluationConfig(**raw.get("evaluation", {})),
         multihoprag=MultiHopRAGConfig(dataset_dir=_resolve(base, raw["multihoprag"]["dataset_dir"])) if "multihoprag" in raw else None,
+        agentic=AgenticConfig(**raw.get("agentic", {})),
         config_path=path,
     )
     _validate(config)
@@ -166,3 +177,13 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("max_retries 必须为正数，retry_delay_seconds 不能为负数。")
     if config.evaluation.concurrency <= 0:
         raise ValueError("evaluation.concurrency 必须为正数。")
+    if config.agentic.base_profile not in {"dense", "bm25", "hybrid", "hybrid-rerank", "advanced"}:
+        raise ValueError("agentic.base_profile 必须是已知的 Profile。")
+    if config.agentic.max_hops <= 0:
+        raise ValueError("agentic.max_hops 必须为正数。")
+    if config.agentic.max_corrections_per_hop < 0:
+        raise ValueError("agentic.max_corrections_per_hop 不能为负数。")
+    if config.agentic.structured_output_retries < 0:
+        raise ValueError("agentic.structured_output_retries 不能为负数。")
+    if config.agentic.recursion_limit <= 0:
+        raise ValueError("agentic.recursion_limit 必须为正数。")

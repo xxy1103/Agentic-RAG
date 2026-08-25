@@ -122,28 +122,31 @@ def ingest(config: AppConfig, embedder: Embedder, on_progress: IngestProgressCal
     }
 
 
-def ask(
+def retrieve_hits(
     config: AppConfig,
     embedder: Embedder,
-    generator: Generator,
     question: str,
     profile: str | None = None,
     reranker: Reranker | None = None,
     rewriter: QueryRewriter | None = None,
-    generate: bool = True,
+    generator: Generator | None = None,
     on_stage: StageProgressCallback | None = None,
     dense_store: FaissStore | None = None,
     bm25_store: BM25Store | None = None,
-    run_log_dir: Path | None = None,
+    top_k: int | None = None,
 ) -> dict[str, object]:
     started = time.perf_counter()
     selected = profile_for(config, profile)
     stage_seconds: dict[str, float] = {}
-    stage_calls: dict[str, int] = {"embedding": 0, "generation": 0, "rewrite": 0, "rerank": 0}
+    stage_calls: dict[str, int] = {"embedding": 0, "rewrite": 0, "rerank": 0}
     analysis: QueryAnalysis | None = None
     if selected.rewrite:
         rewrite_started = time.perf_counter()
-        analysis = _run_stage("rewrite", lambda: (rewriter or QueryRewriter(generator, config.models, config.query_rewrite)).rewrite(question), on_stage)
+        if rewriter is None:
+            if generator is None:
+                raise ValueError("运行带有 query_rewrite 的 Profile 时必须提供 generator 或 rewriter。")
+            rewriter = QueryRewriter(generator, config.models, config.query_rewrite)
+        analysis = _run_stage("rewrite", lambda: rewriter.rewrite(question), on_stage)
         stage_seconds["rewrite"] = round(time.perf_counter() - rewrite_started, 3)
         stage_calls["rewrite"] += 1
     dense_query = analysis.rewritten_query if analysis else question
@@ -178,14 +181,71 @@ def ask(
     else:
         candidates = bm25_hits
 
-    final_hits = candidates[: config.retrieval.top_k]
+    k = top_k or config.retrieval.top_k
+    final_hits = candidates[:k]
     if selected.rerank and candidates:
         rerank_started = time.perf_counter()
-        final_hits = _run_stage("rerank", lambda: (reranker or DashScopeReranker(config.models, config.reranker)).rerank(question, candidates, config.reranker.top_n), on_stage)
+        rerank_top_n = min(config.reranker.top_n, k)
+        final_hits = _run_stage("rerank", lambda: (reranker or DashScopeReranker(config.models, config.reranker)).rerank(question, candidates, rerank_top_n), on_stage)
         stage_seconds["rerank"] = round(time.perf_counter() - rerank_started, 3)
         stage_calls["rerank"] += 1
     elif selected.rerank:
         _notify_stage(on_stage, "rerank", "skipped")
+
+    return {
+        "profile": selected.name,
+        "selected_profile": selected,
+        "query_analysis": analysis,
+        "queries": {"dense": dense_query, "bm25": sparse_query},
+        "final_hits": final_hits,
+        "dense_hits": dense_hits,
+        "bm25_hits": bm25_hits,
+        "candidates": candidates,
+        "dense_store": dense_store,
+        "bm25_store": bm25_store,
+        "stage_seconds": stage_seconds,
+        "stage_calls": stage_calls,
+        "elapsed_seconds": round(time.perf_counter() - started, 3),
+    }
+
+
+def ask(
+    config: AppConfig,
+    embedder: Embedder,
+    generator: Generator,
+    question: str,
+    profile: str | None = None,
+    reranker: Reranker | None = None,
+    rewriter: QueryRewriter | None = None,
+    generate: bool = True,
+    on_stage: StageProgressCallback | None = None,
+    dense_store: FaissStore | None = None,
+    bm25_store: BM25Store | None = None,
+    run_log_dir: Path | None = None,
+) -> dict[str, object]:
+    started = time.perf_counter()
+    retrieval_res = retrieve_hits(
+        config=config,
+        embedder=embedder,
+        question=question,
+        profile=profile,
+        reranker=reranker,
+        rewriter=rewriter,
+        generator=generator,
+        on_stage=on_stage,
+        dense_store=dense_store,
+        bm25_store=bm25_store,
+        top_k=config.retrieval.top_k,
+    )
+    selected_name = str(retrieval_res["profile"])
+    final_hits: list[SearchHit] = retrieval_res["final_hits"]  # type: ignore
+    dense_hits: list[SearchHit] = retrieval_res["dense_hits"]  # type: ignore
+    bm25_hits: list[SearchHit] = retrieval_res["bm25_hits"]  # type: ignore
+    candidates: list[SearchHit] = retrieval_res["candidates"]  # type: ignore
+    analysis: QueryAnalysis | None = retrieval_res["query_analysis"]  # type: ignore
+    stage_seconds = dict(retrieval_res["stage_seconds"])  # type: ignore
+    stage_calls = {"embedding": 0, "generation": 0, "rewrite": 0, "rerank": 0}
+    stage_calls.update(retrieval_res["stage_calls"])  # type: ignore
 
     prompt = ""
     answer: str | None = None
@@ -205,27 +265,27 @@ def ask(
         answer = answer.rstrip() + "\n\n参考来源：\n" + "\n".join(f"- {citation}" for citation in citations)
     result = {
         "question": question,
-        "profile": selected.name,
+        "profile": selected_name,
         "query_analysis": analysis.to_dict() if analysis else None,
-        "queries": {"dense": dense_query, "bm25": sparse_query},
+        "queries": retrieval_res["queries"],
         "hits": [hit.to_dict() for hit in final_hits],
         "retrieval": {
             "dense": [hit.to_dict() for hit in dense_hits],
             "bm25": [hit.to_dict() for hit in bm25_hits],
-            "fused": [hit.to_dict() for hit in candidates] if selected.dense and selected.bm25 else [],
+            "fused": [hit.to_dict() for hit in candidates] if PROFILES[selected_name].dense and PROFILES[selected_name].bm25 else [],
             "candidates": [hit.to_dict() for hit in candidates],
             "final": [hit.to_dict() for hit in final_hits],
         },
         "prompt": prompt,
         "answer": answer,
         "citations": citations,
-        "models": {"embedding": config.models.embedding_model, "llm": config.models.llm_model, "reranker": config.reranker.model if selected.rerank else None},
+        "models": {"embedding": config.models.embedding_model, "llm": config.models.llm_model, "reranker": config.reranker.model if PROFILES[selected_name].rerank else None},
         "stage_seconds": stage_seconds,
         "stage_calls": stage_calls,
         "elapsed_seconds": round(time.perf_counter() - started, 3),
     }
     if config.runtime.save_runs:
-        _save_run(run_log_dir or config.paths.runs_dir / selected.name, result, config.safe_dict())
+        _save_run(run_log_dir or config.paths.runs_dir / selected_name, result, config.safe_dict())
     return result
 
 

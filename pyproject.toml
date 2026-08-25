@@ -17,6 +17,7 @@ dependencies = [
   "python-dotenv>=1.0",
   "PyYAML>=6.0",
   "jieba>=0.42.1",
+  "langgraph>=1.0",
 ]
 
 [project.optional-dependencies]

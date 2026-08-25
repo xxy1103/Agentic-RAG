@@ -83,3 +83,20 @@ Query Rewrite 通过 `query_rewrite.language` 选择指令语言：本地配置�
 评测默认在同一个 Profile 内并发执行 4 道题；并发数可通过 `evaluation.concurrency` 调整，设为 `1` 即恢复串行。并发模式显示线程安全的题目总进度，串行模式额外显示当前题目的阶段进度。FAISS/BM25 索引在每个 Profile 内只加载一次，结果始终按题集原顺序保存。
 
 Embedding、生成和 Rerank 请求遇到连接失败、超时、HTTP 408/409/425/429 或 5xx 时，会按照 `models.max_retries` 自动重试，并在每次重试前固定等待 `models.retry_delay_seconds`（默认 5 秒）。鉴权失败、参数错误等不可恢复请求立即失败。单题最终失败后仍会记录题号、失败阶段和原始错误并继续评测；失败题按 0 分计入检索指标，并在汇总中单独可查。
+
+## Phase 3：受控 Agentic Multi-Hop 检索
+
+Phase 3 基于 LangGraph 状态图构建了受控多跳检索闭环：包含 Query Router（单/多跳路由）、逐跳 Hybrid-Rerank 检索、Evidence Grader（证据充分性判断）、按需 Query Corrector（单跳检索失败纠错）与轮询证据交织截取。
+
+```powershell
+# 单题 Agentic 检索（返回完整多跳命中与链路追踪 Trace）
+python -m base_rag agentic-retrieve --config config/default.yaml --question "创办 A 公司的人后来领导了哪家机构？"
+
+# MultiHop-RAG 分层开发集 (60题) 评测与 Baseline 对照
+python -m base_rag agentic-eval --config config/multihoprag.yaml --split dev --system both
+
+# MultiHop-RAG 锁定测试集 (120题) 评测
+python -m base_rag agentic-eval --config config/multihoprag.yaml --split test --system both
+```
+
+评测产物写入 `runs/multihoprag/agentic_evaluations/<split>-<时间戳>/`，自动生成包含成对增量（Delta）、95% 置信区间、平均跳数与终止原因分布的 `REPORT.md` 与 `summary.json`。支持题目级 checkpoint 自动断点恢复。

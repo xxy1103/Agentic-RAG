@@ -4,6 +4,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from base_rag.agentic import run_agentic_retrieval
+from base_rag.agentic_eval import evaluate_agentic_multihop
 from base_rag.config import load_config
 from base_rag.embedding import DashScopeEmbedder, DashScopeGenerator
 from base_rag.evaluation import create_retrieval_evaluation_batch_dir, evaluate, print_progress, write_evaluation_artifact, write_retrieval_evaluation_batch
@@ -22,6 +24,13 @@ def main() -> None:
     subparsers.choices["ask"].add_argument("--profile", choices=tuple(PROFILES), help="检索 Profile；省略时使用 YAML 默认值")
     for name in ("eval",):
         subparsers.choices[name].add_argument("--questions", default="evaluations/phase2_questions.yaml", help="评测问题集")
+    agentic_retrieve = subparsers.add_parser("agentic-retrieve", help="运行受控的 Agentic Multi-Hop 检索")
+    agentic_retrieve.add_argument("--config", default="config/default.yaml", help="YAML 配置文件")
+    agentic_retrieve.add_argument("--question", required=True, help="需要检索的问题")
+    agentic_eval = subparsers.add_parser("agentic-eval", help="评测 Agentic Multi-Hop 检索与 Baseline 对照")
+    agentic_eval.add_argument("--config", default="config/multihoprag.yaml", help="MultiHop-RAG YAML 配置文件")
+    agentic_eval.add_argument("--split", choices=("dev", "test"), default="dev", help="评测划分（dev 60题，test 120题）")
+    agentic_eval.add_argument("--system", choices=("baseline", "agentic", "both"), default="both", help="评测系统")
     prepare_multihop = subparsers.add_parser("prepare-multihop", help="下载并转换独立的 MultiHop-RAG 公开基准")
     prepare_multihop.add_argument("--config", default="config/multihoprag.yaml", help="MultiHop-RAG YAML 配置文件")
     prepare_multihop.add_argument("--force", action="store_true", help="重新下载并覆盖已准备的公开基准")
@@ -68,6 +77,12 @@ def main() -> None:
             profiles = (args.profile,) if args.profile else tuple(PROFILES)
             batch_dir, results = evaluate_multihoprag(config, embedder, generator, profiles=profiles, limit=args.limit, on_progress=print_progress)
             print(json.dumps({"artifact_dir": str(batch_dir), "benchmark": "MultiHop-RAG", "mode": "retrieval", "profiles": {profile: result["metrics"] for profile, result in results.items()}}, ensure_ascii=False, indent=2))
+        elif args.command == "agentic-retrieve":
+            result = run_agentic_retrieval(config, embedder, generator, args.question)
+            print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        elif args.command == "agentic-eval":
+            batch_dir, summary = evaluate_agentic_multihop(config, embedder, generator, split=args.split, system=args.system, on_progress=print_progress)
+            print(json.dumps({"artifact_dir": str(batch_dir), "summary": summary}, ensure_ascii=False, indent=2))
     except Exception as exc:
         print(f"错误：{exc}", file=sys.stderr)
         raise SystemExit(1) from exc

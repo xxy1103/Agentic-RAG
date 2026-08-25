@@ -52,3 +52,10 @@ runtime:
 
 evaluation:
   concurrency: 4
+
+agentic:
+  base_profile: hybrid-rerank
+  max_hops: 3
+  max_corrections_per_hop: 1
+  structured_output_retries: 1
+  recursion_limit: 25
