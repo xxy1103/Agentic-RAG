@@ -305,7 +305,7 @@ def test_evaluation_writes_summary_and_report(tmp_path: Path) -> None:
     assert summary["kind"] == "evaluation"
     assert "split" not in summary["evaluation"]
     report = (artifact_dir / "REPORT.md").read_text(encoding="utf-8")
-    assert "全量评测报告" in report and "Evidence Coverage@6" in report
+    assert "全量评测报告" in report and "Evidence Coverage@6" in report and "Chunk Recall@20" in report
 
 
 def test_evaluation_runs_questions_concurrently_but_preserves_question_order(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -247,14 +247,14 @@ def write_retrieval_evaluation_batch(config: AppConfig, questions_path: Path, re
         "- 模式：仅检索；未调用 LLM 生成最终答案。",
         "- 评分分母：每个 Profile 中检索阶段成功完成的可回答题；失败数单列，不按 0 分计入。",
         "",
-        "| Profile | 已完成/总题 | 失败 | Source Recall@6 | Chunk Recall@6 | Evidence Coverage@6 | MRR@6 | nDCG@6 | 平均延迟(s) |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Profile | 已完成/总题 | 失败 | Source Recall@6 | Chunk Recall@6 | Chunk Recall@20 | Evidence Coverage@6 | MRR@6 | nDCG@6 | 平均延迟(s) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for profile, result in results.items():
         metrics = result["metrics"]
         lines.append(
             f"| {profile} | {metrics['completed_questions']}/{metrics['questions']} | {metrics['failed_questions']} | "
-            f"{metrics['source_recall_at_6']:.4f} | {metrics['chunk_recall_at_6']:.4f} | "
+            f"{metrics['source_recall_at_6']:.4f} | {metrics['chunk_recall_at_6']:.4f} | {metrics['chunk_recall_at_20']:.4f} | "
             f"{metrics['evidence_coverage_at_6']:.4f} | {metrics['mrr_at_6']:.4f} | "
             f"{metrics['ndcg_at_6']:.4f} | {metrics['mean_latency_seconds']:.3f} |"
         )
@@ -288,9 +288,9 @@ def _evaluation_report(result: dict[str, Any]) -> str:
         "",
         "## 检索指标",
         "",
-        "| Source Recall@6 | Chunk Recall@6 | Evidence Coverage@6 | MRR@6 | nDCG@6 | 平均延迟(s) |",
-        "|---:|---:|---:|---:|---:|---:|",
-        f"| {metrics['source_recall_at_6']:.4f} | {metrics['chunk_recall_at_6']:.4f} | {metrics['evidence_coverage_at_6']:.4f} | {metrics['mrr_at_6']:.4f} | {metrics['ndcg_at_6']:.4f} | {metrics['mean_latency_seconds']:.3f} |",
+        "| Source Recall@6 | Chunk Recall@6 | Chunk Recall@20 | Evidence Coverage@6 | MRR@6 | nDCG@6 | 平均延迟(s) |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+        f"| {metrics['source_recall_at_6']:.4f} | {metrics['chunk_recall_at_6']:.4f} | {metrics['chunk_recall_at_20']:.4f} | {metrics['evidence_coverage_at_6']:.4f} | {metrics['mrr_at_6']:.4f} | {metrics['ndcg_at_6']:.4f} | {metrics['mean_latency_seconds']:.3f} |",
         "",
     ]
     if retrieval_only:
