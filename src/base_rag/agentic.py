@@ -34,11 +34,15 @@ from base_rag.rerank import Reranker
 from base_rag.store import FaissStore
 
 
-def interleave_hop_hits(accumulated_hits_by_hop: list[list[SearchHit]], top_k: int) -> list[SearchHit]:
+def interleave_hop_hits(
+    accumulated_hits_by_hop: list[list[SearchHit]],
+    top_k: int,
+    excluded_chunk_ids: set[str] | None = None,
+) -> list[SearchHit]:
     """Round-robin interleave hits from each hop while deduplicating by chunk_id."""
-    if not accumulated_hits_by_hop:
+    if not accumulated_hits_by_hop or top_k <= 0:
         return []
-    seen_chunk_ids: set[str] = set()
+    seen_chunk_ids = set(excluded_chunk_ids or ())
     interleaved: list[SearchHit] = []
     max_len = max((len(hop_hits) for hop_hits in accumulated_hits_by_hop), default=0)
     for rank_idx in range(max_len):
@@ -57,6 +61,54 @@ def interleave_hop_hits(accumulated_hits_by_hop: list[list[SearchHit]], top_k: i
     for rank, hit in enumerate(interleaved, start=1):
         final_hits.append(replace(hit, rank=rank))
     return final_hits
+
+
+def compose_final_hits(
+    accumulated_hits_by_hop: list[list[SearchHit]],
+    requirement_assessments: list[RequirementAssessment],
+    top_k: int,
+) -> list[SearchHit]:
+    """Prioritize Grader-bound evidence, then fill remaining slots by hop round-robin.
+
+    Reranker scores from different queries are intentionally never compared. Bound
+    evidence is selected in requirement order and round-robin order within each
+    requirement, preserving diversity across the evidence chain.
+    """
+    if top_k <= 0:
+        return []
+
+    hit_by_chunk_id: dict[str, SearchHit] = {}
+    for hop_hits in accumulated_hits_by_hop:
+        for hit in hop_hits:
+            hit_by_chunk_id.setdefault(hit.chunk.chunk_id, hit)
+
+    selected: list[SearchHit] = []
+    seen_chunk_ids: set[str] = set()
+    evidence_lists = [
+        [hit_by_chunk_id[chunk_id] for chunk_id in assessment.evidence_chunk_ids if chunk_id in hit_by_chunk_id]
+        for assessment in requirement_assessments
+        if assessment.status == "supported"
+    ]
+    max_evidence_per_requirement = max((len(hits) for hits in evidence_lists), default=0)
+    for evidence_rank in range(max_evidence_per_requirement):
+        for evidence_hits in evidence_lists:
+            if evidence_rank >= len(evidence_hits):
+                continue
+            hit = evidence_hits[evidence_rank]
+            if hit.chunk.chunk_id in seen_chunk_ids:
+                continue
+            seen_chunk_ids.add(hit.chunk.chunk_id)
+            selected.append(hit)
+            if len(selected) >= top_k:
+                return [replace(hit, rank=rank) for rank, hit in enumerate(selected, start=1)]
+
+    fallback_hits = interleave_hop_hits(
+        accumulated_hits_by_hop,
+        top_k - len(selected),
+        excluded_chunk_ids=seen_chunk_ids,
+    )
+    selected.extend(fallback_hits)
+    return [replace(hit, rank=rank) for rank, hit in enumerate(selected, start=1)]
 
 
 def _extract_json_block(text: str) -> str:
@@ -570,7 +622,11 @@ def run_agentic_retrieval(
 
     def node_finalize(state: AgenticState) -> dict[str, Any]:
         accumulated = state.get("accumulated_hits_by_hop", [])
-        final_hits = interleave_hop_hits(accumulated, config.retrieval.top_k)
+        final_hits = compose_final_hits(
+            accumulated,
+            state.get("requirement_assessments", []),
+            config.retrieval.top_k,
+        )
         reason = state.get("termination_reason")
         if not reason:
             decision = state.get("latest_decision")
@@ -646,7 +702,11 @@ def run_agentic_retrieval(
         final_state = initial_state
         final_state["termination_reason"] = "recursion_guard"
         final_state["error"] = str(exc)
-        final_state["final_hits"] = interleave_hop_hits(final_state.get("accumulated_hits_by_hop", []), config.retrieval.top_k)
+        final_state["final_hits"] = compose_final_hits(
+            final_state.get("accumulated_hits_by_hop", []),
+            final_state.get("requirement_assessments", []),
+            config.retrieval.top_k,
+        )
 
     elapsed_total = round(time.perf_counter() - started, 3)
     route_dec = final_state.get("route_decision") or RouteDecision("single_hop", question, "初始路由")

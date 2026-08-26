@@ -51,7 +51,7 @@ runtime:
   default_profile: advanced
 
 evaluation:
-  concurrency: 4
+  concurrency: 6
 
 agentic:
   base_profile: hybrid-rerank

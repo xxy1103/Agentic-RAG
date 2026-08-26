@@ -12,6 +12,7 @@ import pytest
 from base_rag.agentic import (
     _call_structured_llm,
     apply_complete_gate,
+    compose_final_hits,
     correct_query_llm,
     grade_evidence_llm,
     interleave_hop_hits,
@@ -66,6 +67,29 @@ def test_interleave_hop_hits_deduplicates_and_round_robins() -> None:
     ids = [h.chunk.chunk_id for h in interleaved]
     assert ids == ['c1', 'c2', 'c6', 'c4']
     assert [h.rank for h in interleaved] == [1, 2, 3, 4]
+
+
+def test_compose_final_hits_prioritizes_requirement_bound_evidence_then_round_robins() -> None:
+    hop1 = [_hit('h1-r1', 'hop one first', 1), _hit('bound-r1', 'R1 evidence', 2), _hit('h1-r3', 'hop one third', 3)]
+    hop2 = [_hit('h2-r1', 'hop two first', 1), _hit('h2-r2', 'hop two second', 2), _hit('bound-r2', 'R2 evidence', 3)]
+    assessments = [
+        RequirementAssessment('R1', 'supported', ['bound-r1']),
+        RequirementAssessment('R2', 'supported', ['bound-r2', 'missing-chunk']),
+        RequirementAssessment('R3', 'missing', ['h1-r3']),
+    ]
+
+    final_hits = compose_final_hits([hop1, hop2], assessments, top_k=5)
+
+    # Bound evidence is diversified by requirement before fallback; unsupported
+    # assessments and nonexistent chunk IDs must not occupy final slots.
+    assert [hit.chunk.chunk_id for hit in final_hits] == ['bound-r1', 'bound-r2', 'h1-r1', 'h2-r1', 'h2-r2']
+    assert [hit.rank for hit in final_hits] == [1, 2, 3, 4, 5]
+
+
+def test_compose_final_hits_without_bound_evidence_preserves_old_round_robin() -> None:
+    hop1 = [_hit('c1', 'chunk 1', 1), _hit('c2', 'chunk 2', 2)]
+    hop2 = [_hit('c3', 'chunk 3', 1), _hit('c4', 'chunk 4', 2)]
+    assert [hit.chunk.chunk_id for hit in compose_final_hits([hop1, hop2], [], top_k=4)] == ['c1', 'c3', 'c2', 'c4']
 
 
 class SequentialGenerator:
