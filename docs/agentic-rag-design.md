@@ -24,7 +24,7 @@ Phase 2 已经完成一条固定的 Advanced RAG 链路：问题经过 Dense 与
 
 ## 1. Phase 3 新增模块
 
-### 1.1 `models.py`：把检索结果扩展成可执行、可审计的 Agent 状态
+### 1.1 Models：把检索结果扩展成可执行、可审计的 Agent 状态
 
 Phase 2 的核心对象是 `SearchHit`。它回答“某个 Chunk 在 Dense、BM25、RRF 和 Rerank 中排第几”。Phase 3 还需要表达四类新信息：问题被怎样规划、哪些事实必须有证据、每一跳做了什么，以及整个任务为什么结束。
 
@@ -115,25 +115,7 @@ AgenticRetrievalResult(
 
 它不只给最终 `final_hits`，还保留从 Router 到每次 Grader 判断的完整过程。这使 Phase 3 可以区分路由失败、检索失败、证据判断失败、预算耗尽和正常完成，而不是把所有错误都归结为“最终没有答对”。
 
-### 1.2 `_call_structured_llm()`：把 LLM 输出限制为可验证的控制信号
-
-Router、Evidence Grader 和 Query Corrector 都依赖 LLM，但 LangGraph 的条件边不能可靠地消费任意自然语言。因此，Phase 3 用统一的 `_call_structured_llm()` 完成四个步骤：
-
-```text
-结构化 Prompt
-    ↓
-temperature = 0 调用 LLM
-    ↓
-提取 JSON 代码块或首尾大括号
-    ↓
-json.loads() + 模块专属 validator
-```
-
-若输出不是 JSON 对象、字段缺失或枚举值非法，代码会把错误原因附加到原 Prompt 后再次请求。配置 `structured_output_retries=1` 表示初次调用失败后最多再重试一次，总尝试次数最多为 2。
-
-这层只能保证“结构合法”，不能证明“语义正确”。例如，Grader 可以输出格式正确但内容错误的 `complete`。因此项目在 LLM 校验后又增加了确定性的 `apply_complete_gate()`，不能把 JSON Schema 校验误解成事实校验。
-
-### 1.3 Query Router：把原始问题转换成首跳查询与证据计划
+### 1.2 Query Router：把原始问题转换成首跳查询与证据计划
 
 Router 的职责不是检索，也不是回答，而是回答两个控制问题：
 
@@ -188,7 +170,7 @@ Router 的输入只有原始问题：
 }
 ```
 
-代码进一步要求：`route` 必须属于两个已知枚举；`query` 和 `reason` 不能为空；需求数组不能为空；ID 必须唯一；`multi_hop` 至少包含两项需求。校验成功后，`node_route()` 将首跳状态初始化为：
+校验成功后，`node_route()` 将首跳状态初始化为：
 
 ```Python
 {
@@ -200,9 +182,7 @@ Router 的输入只有原始问题：
 }
 ```
 
-若 Router 连续输出非法结构，节点记录 `router_failed` 并直接进入 `finalize`。代码虽然保留一个单跳形式的兜底 `RouteDecision` 用于结果结构完整，但不会静默执行普通检索。
-
-### 1.4 `retrieve_hop`：每一跳继续复用 Phase 2 检索器
+### 1.3 retrieve_hop：每一跳继续复用 Phase 2 检索器
 
 Phase 3 没有重新实现 Dense、BM25、RRF 或 Reranker。`node_retrieve()` 把当前 `current_query` 直接传给 Phase 2 的 `retrieve_hits()`：
 
@@ -234,9 +214,7 @@ retrieval_res = retrieve_hits(
 
 Agentic RAG 改变的是“调用几次、每次查什么、何时停止”，不是 Phase 2 检索算法本身。FAISS 与 BM25 索引在状态图运行前加载一次，后续所有跳复用同一只读索引，避免每跳重复加载。
 
-普通下一跳会在 `accumulated_hits_by_hop` 追加一组命中；纠错检索则替换当前跳的旧命中。这意味着一次失败查询不会和它的纠错结果同时占据同一跳的证据位置。
-
-### 1.5 Evidence Grader：逐项验收累计证据，而不是猜答案
+### 1.4 Evidence Grader：逐项验收累计证据，而不是猜答案
 
 Evidence Grader 同时读取原始问题、当前查询、Router 的全部需求，以及截至当前所有跳的累计证据。不同跳的命中先按轮询方式交织并去重，再连同真实 `chunk_id`、来源和正文进入 Prompt。
 
@@ -279,40 +257,13 @@ Evidence Grader 同时读取原始问题、当前查询、Router 的全部需求
 
 Grader 的三个 verdict 含义不同：
 
-| verdict | 证据状态 | 后续动作 |
-| --- | --- | --- |
-| `complete` | 所有需求均已有直接证据 | 进入 `finalize` |
-| `continue` | 本轮取得进展，但仍缺少下一项事实 | 增加 `current_hop`，使用 `next_query` 检索 |
-| `insufficient` | 当前查询没有取得可靠进展 | 不增加跳数，进入 Query Corrector |
+| verdict          | 证据状态                         | 后续动作                                      |
+| ---------------- | -------------------------------- | --------------------------------------------- |
+| `complete`     | 所有需求均已有直接证据           | 进入`finalize`                              |
+| `continue`     | 本轮取得进展，但仍缺少下一项事实 | 增加`current_hop`，使用 `next_query` 检索 |
+| `insufficient` | 当前查询没有取得可靠进展         | 不增加跳数，进入 Query Corrector              |
 
-### 1.6 `apply_complete_gate()`：用确定性规则阻止过早完成
-
-Grader 的 JSON 即使结构合法，也可能引用不存在的 Chunk，或在某项需求仍是 `missing` 时误报 `complete`。`apply_complete_gate()` 因此重新计算可接受的完成状态：
-
-```text
-LLM 声称 supported
-    ↓
-是否绑定至少一个 chunk_id
-    ↓
-chunk_id 是否真实存在于累计 hits
-    ↓
-所有 requirement 是否都 supported
-    ↓
-只有全部通过才允许 complete
-```
-
-具体规则包括：
-
-- 不存在于累计命中的 `chunk_id` 会被删除；
-- 没有留下真实引用的 `supported` 会降级为 `missing`；
-- 只有所有需求均为 `supported`，有效 verdict 才是 `complete`；
-- LLM 误报 `complete` 时会被改成 `continue`；
-- `next_requirement_id` 必须指向真实缺失项，否则选择第一项缺失需求；
-- `continue` 缺少 `next_query` 时，以缺失需求的描述作为兜底查询。
-
-这形成了两层职责：LLM 负责理解证据语义，确定性代码负责约束引用和完成条件。门控能防止虚构 Chunk 与过早结束，但不能自动证明某段正文是否真的支持该需求；语义判断仍来自 Grader。
-
-### 1.7 Query Corrector：同一事实没有找到时，换一种检索表达
+### 1.5 Query Corrector：同一事实没有找到时，换一种检索表达
 
 `continue` 和 `insufficient` 代表两种不同问题：
 
@@ -354,62 +305,88 @@ Query Corrector 接收原始问题、失败查询、Grader 的失败原因和所
 
 成功后，节点设置 `is_correction=True`、当前跳纠错次数加一，并回到 `retrieve_hop`。它不会增加 `current_hop`，因为目标仍然是寻找同一项缺失事实。
 
-当前代码只使用并保存 `corrected_query`，没有把 Corrector 返回的 `reason` 写入 Trace。若 Corrector 最终失败，代码保留原查询、消耗一次纠错预算并重新检索；默认每跳最多纠错一次，因此不会形成无限循环。
+若 Corrector 最终失败，代码保留原查询、消耗一次纠错预算并重新检索；默认每跳最多纠错一次，因此不会形成无限循环。
 
-### 1.8 多跳证据汇总：不直接比较不同查询的 Reranker 分数
+### 1.6 多跳证据汇总：先保留需求证据，再按跳轮询补位
 
-每一跳的 Reranker 分数来自不同查询，它们不属于同一个可直接比较的评分空间。Phase 3 因此不用“把所有跳的 `rerank_score` 放在一起全局排序”的方式生成最终证据。
+多跳检索结束后，系统会得到多组结果：第 1 跳找到“谁创办了 A 公司”，第 2 跳找到“这个人后来领导了什么机构”。现在还差最后一个问题：怎样把不同跳的结果合成一组 `final_hits`？
 
-运行过程中，`interleave_hop_hits()` 按跳轮询取结果：
+不能直接把所有 Reranker 分数放在一起从高到低排序。因为每一跳的问题不同，分数只表示 Chunk 与“当前这一跳查询”的相关程度。第 1 跳的 0.92 和第 2 跳的 0.86，不是同一场考试里的两个成绩。
 
-```text
-hop 1 rank 1 → hop 2 rank 1 → hop 1 rank 2 → hop 2 rank 2 → ...
-```
+![多跳证据为什么不能直接按分数混排](image/agentic-rag-design/multi-hop-evidence-merge.svg)
 
-相同 `chunk_id` 只保留一次，并重新赋予连续排名。当前工作区的 `compose_final_hits()` 在结束时进一步优先选择 Grader 已绑定到各项需求的证据，再使用跨跳轮询结果补满 Top-K：
+当前系统采用两个简单原则。
 
-```text
-R1 绑定证据 ─┐
-R2 绑定证据 ─┼→ 先按需求顺序保证证据链 → 轮询补充其他命中 → final_hits
-R3 绑定证据 ─┘
-```
+**第一，必要证据优先。** Evidence Grader 已经指出哪些 Chunk 分别支持 R1、R2 等证据需求。系统先把这些 Chunk 放入最终结果，保证完整证据链不会被普通的相似结果挤掉。
 
-这样既优先保留完成门控实际使用的证据，也避免某一跳因为分数尺度不同而吞掉所有最终位置。
-
-### 1.9 `AgenticState` 与 LangGraph：把循环显式写成状态转移
-
-`AgenticState` 是整次运行的共享状态，主要字段可以按职责分为：
-
-| 状态类别 | 关键字段 | 作用 |
-| --- | --- | --- |
-| 输入与规划 | `question`、`route_decision` | 保存原问题与 Router 计划 |
-| 当前控制位置 | `current_hop`、`current_query`、`is_correction` | 表示现在查第几跳、使用什么查询 |
-| 纠错预算 | `correction_count_current_hop` | 限制同一跳重试次数 |
-| 证据 | `latest_hits`、`accumulated_hits_by_hop` | 保存本跳和累计命中 |
-| 验收 | `requirement_assessments`、`latest_decision` | 保存当前证据完成度 |
-| 可观测性 | `traces`、`stage_calls`、`stage_seconds` | 保存过程、调用数和耗时 |
-| 结束 | `termination_reason`、`final_hits`、`error` | 保存终止原因与最终证据 |
-
-LangGraph 在这里不负责检索算法、Prompt 内容或评分逻辑，只负责按照状态和条件边调用节点。当前图包含六个节点：
+**第二，剩余位置按跳轮流补充。** 必要证据放好后，如果 Top-K 还有空位，就依次从第 1 跳、第 2 跳、第 3 跳取一个候选，再进入下一轮。重复 Chunk 会跳过。
 
 ```text
-route_query
-retrieve_hop
-grade_evidence
-prepare_next_hop
-correct_query
-finalize
+先放：R1 证据 → R2 证据
+再补：hop 1 第 1 名 → hop 2 第 1 名 → hop 1 第 2 名 → hop 2 第 2 名
 ```
 
-三类预算共同保证流程有界：
+![两跳证据如何组成最终 Top-K](image/agentic-rag-design/final-hits-composition.svg)
 
-- `max_hops=3`：最多进入三项逐跳检索；
-- `max_corrections_per_hop=1`：每跳最多纠错一次；
-- `recursion_limit=25`：限制整个 LangGraph 状态转移次数。
+例如，Grader 确认 `bound-r1` 支持 R1，`bound-r2` 支持 R2，最终需要 5 个 Chunk：
 
-可观察的终止原因包括 `complete`、`max_hops_reached`、`insufficient_evidence`、`router_failed`、`retrieval_failed`、`grader_failed` 和 `recursion_guard`。
+```text
+final_hits = [bound-r1, bound-r2, h1-r1, h2-r1, h2-r2]
+```
 
-### 1.10 `agentic_eval.py`：用同一题逐题比较固定 Baseline 与 Agentic 系统
+前两个位置保证问题所需的两项事实都在；后三个位置从不同跳轮流补充背景证据。最终结果不会尝试计算一个新的“跨跳总分”，而是优先保证证据完整，再兼顾不同检索跳的多样性。
+
+代码中，`compose_final_hits()` 负责整个组合过程，`interleave_hop_hits()` 负责后半段的轮流补位。理解这两个原则即可，不需要把它们当成新的检索算法。
+
+### 1.7 AgenticState 与 LangGraph：把循环显式写成状态转移
+
+普通 RAG 从问题到答案只向前执行一次，局部变量就足以传递数据。Agentic RAG 会多次检索、判断和回退：第 2 跳必须知道第 1 跳找到了什么，纠错时也必须知道当前失败的是哪一个查询。因此，它需要一本贯穿整次任务的“共享工作笔记”，这就是 `AgenticState`。
+
+这本工作笔记主要记四类信息：
+
+- **任务计划**：原始问题、Router 判断和必须找到的证据；
+- **当前位置**：现在是第几跳、正在查什么、是否属于纠错；
+- **证据进度**：各跳已经找到的 Chunk，以及哪些需求已满足；
+- **运行结果**：每次尝试的 Trace、最终证据和结束原因。
+
+节点不需要私下记忆之前发生的事情。它读取当前 State，完成自己的工作，再把新增或变化的内容写回 State。
+
+![AgenticState 如何随两跳检索逐步更新](image/agentic-rag-design/agentic-state-evolution.svg)
+
+例如，系统开始时只知道用户问题；Router 执行后，State 中出现首跳查询和 R1、R2；第 1 跳检索后加入 `hits₁`；Grader 判断 R1 已满足、R2 缺失，于是写入下一跳查询；第 2 跳完成后，State 才拥有完整证据链和全部 Trace。
+
+如果把 `AgenticState` 理解为共享工作笔记，那么 LangGraph 就是根据笔记内容指挥下一步的“流程调度员”。它不负责 Dense、BM25、RRF、Rerank，也不负责判断证据语义；这些工作仍由前面介绍的节点完成。LangGraph 只做两件事：
+
+1. 按顺序调用节点；
+2. 根据 Grader 的 verdict 选择下一条边。
+
+![LangGraph 如何根据证据状态选择下一条边](image/agentic-rag-design/langgraph-routing-loop.svg)
+
+主流程始终是：
+
+```text
+Router → Retrieve → Grader
+```
+
+真正体现 Agentic 的地方发生在 Grader 之后：
+
+- `complete`：证据已经完整，进入 `finalize`；
+- `continue`：已经取得进展，但还缺下一项事实，增加一跳后重新检索；
+- `insufficient`：当前查询没有可靠进展，不增加跳数，纠正查询后重试。
+
+循环必须有上限，否则错误的 Router 或 Grader 可能让系统反复检索。当前有三层保护：
+
+```text
+最多 3 跳
+每跳最多纠错 1 次
+整张图最多流转 25 次
+```
+
+达到跳数或纠错预算后，系统进入 `finalize`，保留已经找到的证据并记录对应终止原因；若 Router、检索或 Grader 本身失败，也会进入同一个结束节点，而不是让流程失控。
+
+因此，LangGraph 在本项目中的价值不是提供新的 RAG 算法，而是让“当前状态 → 判断条件 → 下一步动作”变成一张明确、可回放、不会无限循环的流程图。
+
+### 1.8 agentic_eval.：用同一题逐题比较固定 Baseline 与 Agentic 系统
 
 Agentic 流程增加调用次数和延迟，不能因为“会循环”就认为质量一定提高。`agentic_eval.py` 使用独立的 MultiHop-RAG 公开基准，把同一道题分别交给：
 
@@ -424,37 +401,124 @@ Agentic：Router + 多跳 hybrid-rerank + Grader / Corrector
 
 ## 2. Agentic RAG 架构
 
-### 2.1 完整架构图
+### 2.1 LangGraph 状态转化图
 
-![Agentic RAG Phase 3 完整架构](image/agentic-rag-design/agentic-rag-architecture.svg)
+![Agentic RAG Phase 3 LangGraph 状态转化](image/agentic-rag-design/agentic-rag-architecture.svg)
 
-完整运行可以压缩为下面五步：
+状态在六个节点之间逐步变化：
 
-1. CLI 加载 YAML、模型适配器以及 Phase 2 的 FAISS/BM25 索引；
-2. Router 生成首跳查询和完整证据需求；
-3. `retrieve_hop` 用 Hybrid-Rerank 找证据，Grader 检查累计证据；
-4. `continue` 进入下一跳，`insufficient` 在当前跳纠错，`complete` 或预算/异常触发结束；
-5. `finalize` 优先保留需求绑定证据，输出 `AgenticRetrievalResult` 并写入 `runs/agentic/`。
+1. `route_query` 写入路由计划、首跳查询和 `current_hop=1`；
+2. `retrieve_hop` 写入本跳命中与累计证据；
+3. `grade_evidence` 写入需求评估、verdict 和 Trace；
+4. `continue` 经过 `prepare_next_hop` 增加跳数，再回到检索；
+5. `insufficient` 经过 `correct_query` 修正当前查询，再回到检索；
+6. `complete`、预算耗尽或节点失败进入 `finalize`，写入最终证据和终止原因。
 
-当前单题入口为：
+## 3. Agentic RAG 评测：会多跳，不等于检索一定更好
 
-```PowerShell
-python -m base_rag agentic-retrieve `
-  --config config/default.yaml `
-  --question "创办 A 公司的人后来领导了哪家机构？"
+前面的章节说明了 Agentic RAG 如何规划、检索、验收和循环，但系统能够完整执行这些节点，并不能证明它比一次固定检索更有效。Agentic 流程还增加了 Router、Grader 和多轮检索，质量收益必须与额外成本一起观察。
+
+本章使用一次已完成的 MultiHop-RAG 开发集评测：
+
+```text
+runs/multihoprag/agentic_evaluations/dev-20260825-223259-005945
 ```
 
-公开基准对照入口为：
+评测只检查检索证据，不调用最终答案生成。因此，它能回答“正确证据是否被找回、是否排得更靠前”，不能回答“最终自然语言答案是否正确”。
 
-```PowerShell
-python -m base_rag agentic-eval `
-  --config config/multihoprag.yaml `
-  --split dev `
-  --system both
+### 3.1 评测要回答三个问题
+
+Agentic RAG 的检索评测可以从浅到深分成三层：
+
+1. **前排排序**：正确证据是否更早出现在 Top-4；
+2. **完整证据**：Top-10 是否找齐回答问题所需的全部事实；
+3. **运行代价**：为了这些变化，增加了多少跳数、模型调用和延迟。
+
+其中，Evidence Coverage 表示 Gold 事实被覆盖的比例；Complete Evidence 要求一题的全部 Gold 事实都出现；MRR 观察第一条正确证据排得有多靠前。
+
+这三层不能互相替代。第一条正确证据排到第 1 名，不代表其余必要事实也已经找齐；同样，Agent 自己返回 `complete`，也不代表外部 Gold 一定确认完整。
+
+### 3.2 Baseline 与 Agentic 如何公平比较
+
+![Agentic RAG 评测的对照设计](image/agentic-rag-design/agentic-evaluation-design.svg)
+
+本次使用固定的 dev 60 题：`inference_query`、`comparison_query`、`temporal_query` 各 20 题。Baseline 与 Agentic 复用同一份英文语料、FAISS/BM25 索引、`hybrid-rerank` 基座 Profile、Top-10 和 Gold 评分规则。
+
+两套系统的主要区别只有检索控制方式：
+
+```text
+Baseline：问题 → 一次 Hybrid-Rerank → Top-10
+
+Agentic：问题 → Router → 最多 3 跳 Hybrid-Rerank
+                         → Grader / Corrector → Top-10
 ```
+
+每道题同时得到一条 Baseline 记录和一条 Agentic 记录，因此可以逐题计算 Delta，而不是只比较两个独立平均数。本次两边均完成 60/60 题，没有检索执行失败记录；Agentic 内部另有 1 题以 `router_failed` 结束，并按实际空结果参与评分。
+
+### 3.3 核心结果：前排证据明显改善，Top-10 完整性没有提升
+
+![Agentic 在 Top-4 与 Top-10 上的不同表现](image/agentic-rag-design/agentic-depth-results.svg)
+
+| 指标                 | Baseline | Agentic |    逐题平均变化 |
+| -------------------- | -------: | ------: | --------------: |
+| Evidence Coverage@4  |   25.42% |  43.06% | +17.64 个百分点 |
+| Complete Evidence@4  |    5.00% |  15.00% | +10.00 个百分点 |
+| MRR@10               |   0.3516 |  0.5903 |         +0.2387 |
+| Evidence Coverage@10 |   48.61% |  50.28% |  +1.67 个百分点 |
+| Complete Evidence@10 |   20.00% |  20.00% |          无变化 |
+
+Top-4 的两项指标和 MRR 都明显提高。逐题配对结果中，Coverage@4 的 95% 置信区间为 `[+8.86,+26.42]` 个百分点，Complete@4 为 `[+1.04,+18.96]` 个百分点，MRR@10 为 `[+0.1323,+0.3452]`，区间均位于 0 以上。
+
+但把观察范围扩大到 Top-10 后，结论不同：Coverage@10 只提高 1.67 个百分点，95% 置信区间 `[-6.66,+9.99]` 跨过 0；Complete@10 完全没有变化，Baseline 和 Agentic 都只有 20%。
+
+因此，本次结果最准确的解释是：
+
+> Agentic RAG 更擅长把正确证据推到前面，但没有稳定找回更多完整证据。
+
+这与 1.6 的多跳证据汇总机制一致：Grader 绑定证据和跨跳组合可以改善最终前排顺序，但如果某项事实从未被任何一跳召回，最终汇总也无法凭空补出证据。
+
+### 3.4 不同问题类型的收益并不一致
+
+| 问题类型   | Coverage@10 变化 | Complete@10 变化 | MRR@10 变化 | 观察                                 |
+| ---------- | ---------------: | ---------------: | ----------: | ------------------------------------ |
+| Inference  |          -5.0 pp |          +5.0 pp |     +0.1729 | 排序提高，但总体事实覆盖略降         |
+| Comparison |          +7.5 pp |         +10.0 pp |     +0.3131 | 三类中收益最稳定                     |
+| Temporal   |          +2.5 pp |         -15.0 pp |     +0.2303 | 第一条证据更靠前，但完整证据明显下降 |
+
+Comparison 问题通常需要从多篇文章中找到可以直接对照的事实，逐跳检索与证据绑定在这类问题上最容易形成清晰收益。Temporal 问题则不仅要找到多篇文章，还要正确保持时间顺序和时间点约束；当前 Agentic 虽然提升了前排排名，却更容易漏掉组成完整时间链的部分证据。
+
+所以不能把整体 MRR 提升写成“Agentic 对所有多跳问题都更好”。当前证据支持的是：排序收益较普遍，完整性收益依赖问题类型，Temporal 仍是明显短板。
+
+### 3.5 Agent 实际运行了多少跳，又为什么结束
+
+![60 道题在 Agentic 流程中的路由与终止分布](image/agentic-rag-design/agentic-termination-flow.svg)
+
+60 道题平均执行 2.2 跳。Router 将 45 题判为 `multi_hop`，15 题判为 `single_hop`；只有 2 题发生查询纠错，纠错率为 3.3%。这说明当前 Agentic 的额外检索主要来自 `continue → prepare_next_hop`，而不是频繁触发 Corrector。
+
+最终有 42 题由 Grader 判定 `complete`，17 题达到 `max_hops_reached`，1 题 `router_failed`。达到最大跳数并不表示完全没有正确证据，只表示在三跳预算内，Grader 仍未确认所有 Router 需求都已满足。
+
+这些过程指标用于解释 Agent 怎样运行，不能代替 Gold 检索指标。`complete` 是系统内部判断，Complete Evidence@10 才是外部基准对证据完整性的检查。
+
+### 3.6 最值得关注的问题：Grader 自认为完成，不等于 Gold 真的完整
+
+![Grader complete 与 Gold Complete Evidence 的差距](image/agentic-rag-design/grader-gold-gap.svg)
+
+在 42 道 `termination_reason=complete` 的题中，只有 10 题同时达到 Gold Complete Evidence@10，另外 32 题仍缺少至少一项 Gold 事实。也就是说，Grader 经常认为 Router 需求已经被证据覆盖，但外部标注并不认可这条证据链完整。
+
+相反，在 17 道达到最大跳数的题中，有 2 题其实已经达到 Gold Complete Evidence@10。这说明 Grader 也存在少量“证据已经完整，却仍然继续检索”的情况。
+
+### 3.7 质量提升付出了多少成本
+
+Agentic 每题平均调用约 2.22 次 Embedding、2.22 次 Rerank 和 2.22 次 Grader，并额外调用一次 Router；平均总耗时为 93.434 秒。Baseline 每题只执行一次 Hybrid-Rerank。
+
+本次 Baseline 平均耗时为 0.944 秒，中位数为 0.884 秒；Agentic 平均为 93.434 秒，中位数为 85.302 秒。
+
+## 4. 总结
 
 Phase 3 的核心变化可以总结为：
 
 > Phase 2 负责把一次查询检索好；Phase 3 负责根据证据状态决定下一次查什么、是否要纠错，以及何时可以停止。
 
 这也是当前实现中“Agentic”的准确边界：检索能力仍来自透明的 Phase 2 模块，LLM 负责生成受约束的控制信号，确定性门控和预算负责限制错误与循环，LangGraph 只负责编排可回放的状态转移。
+
+从当前 dev 评测看，这套控制层已经改善了前排证据排序，但证据完整性、Grader 校准和运行成本仍然是下一阶段需要解决的核心问题。

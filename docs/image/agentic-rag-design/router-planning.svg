@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620" role="img" aria-labelledby="title desc">
   <title id="title">Query Router 的输入、判断与结构化输出</title>
   <desc id="desc">原始问题进入 Router，Router 判断单跳或多跳，并输出首跳查询、原因和证据需求清单，随后经过确定性校验。</desc>
   <defs>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#183153" flood-opacity=".12"/></filter>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#60758e"/></marker>
-    <style>.title{font:700 30px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#183153}.subtitle{font:400 15px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#58708f}.h2{font:700 17px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#183153}.body{font:400 14px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#4c6078}.small{font:400 12px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#65788e}.code{font:600 14px Consolas,"Microsoft YaHei",sans-serif;fill:#29465f}.arrow{stroke:#60758e;stroke-width:2.4;fill:none;marker-end:url(#arrow)}</style>
+    <style>.title{font:700 34px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#183153}.subtitle{font:400 17px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#58708f}.h2{font:700 20px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#183153}.body{font:400 16px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#4c6078}.small{font:400 14px "Microsoft YaHei","Noto Sans SC",sans-serif;fill:#65788e}.code{font:600 16px Consolas,"Microsoft YaHei",sans-serif;fill:#29465f}.arrow{stroke:#60758e;stroke-width:2.6;fill:none;marker-end:url(#arrow)}</style>
   </defs>
-  <rect width="1280" height="720" rx="24" fill="#f5f8fc"/>
+  <rect width="1280" height="620" rx="24" fill="#f5f8fc"/>
   <text x="54" y="58" class="title">Router 规划“先查什么”和“最终必须证明什么”</text>
   <text x="54" y="88" class="subtitle">它只看到原始问题，不读取检索结果，也不填写最终答案。</text>
 
@@ -27,10 +27,10 @@
 
   <rect x="878" y="126" width="348" height="224" rx="20" fill="#dff3e8" filter="url(#shadow)"/>
   <text x="904" y="162" class="code">RouteDecision</text>
-  <text x="904" y="198" class="body">route</text><text x="1008" y="198" class="small">multi_hop</text>
-  <text x="904" y="226" class="body">query</text><text x="1008" y="226" class="small">A 公司创办者是谁？</text>
-  <text x="904" y="254" class="body">reason</text><text x="1008" y="254" class="small">需要中间实体</text>
-  <text x="904" y="282" class="body">requirements</text><text x="1008" y="282" class="small">R1 · R2</text>
+  <text x="904" y="198" class="body">route</text><text x="1035" y="198" class="small">multi_hop</text>
+  <text x="904" y="226" class="body">query</text><text x="1035" y="226" class="small">A 公司创办者是谁？</text>
+  <text x="904" y="254" class="body">reason</text><text x="1035" y="254" class="small">需要中间实体</text>
+  <text x="904" y="282" class="body">requirements</text><text x="1035" y="282" class="small">R1 · R2</text>
   <text x="904" y="322" class="small">query 是首跳，不是最终问题的改写</text>
 
   <rect x="180" y="420" width="920" height="176" rx="20" fill="#fff" opacity=".96"/>
